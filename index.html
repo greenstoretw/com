@@ -278,7 +278,7 @@
         import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 
-        // Firebase 配置 (請替換為您自己的配置)
+        // Firebase 配置 (請將此處替換為您自己的配置)
         const firebaseConfig = {
           apiKey: "AIzaSyBe4RmOd4K3L8oVlANLX_1xmAyhsY0eB4k",
           authDomain: "green-1de30.firebaseapp.com",
@@ -300,11 +300,8 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 // 如果是 Canvas 環境，使用 __app_id 構建集合路徑
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                // 這裡的 'shops' 是 Firestore 集合的名稱
-                // 請確保您在 Firebase Console 的 Firestore Database 中建立了一個名為 'shops' 的集合
-                // 如果您的應用程式是在 Canvas 環境中部署，路徑會是 `artifacts/${appId}/public/data/shops`
                 // 否則，您可以直接使用 `collection(db, "shops")`
+                const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.appId; // 使用 firebaseConfig.appId 作為 fallback
                 shopsCollectionRef = collection(db, `artifacts/${appId}/public/data/shops`); 
                 console.log("Firebase authenticated as:", user.uid);
                 console.log("Firestore collection path:", shopsCollectionRef.path);
@@ -336,7 +333,9 @@
         // Firestore 數據監聽器
         function setupFirestoreListener() {
             if (!shopsCollectionRef) {
-                console.error("Firestore collection reference is not set.");
+                console.error("Firestore collection reference is not set. Authentication might still be pending.");
+                // 嘗試在稍後重新設定監聽器，或在認證流程中確保 shopsCollectionRef 被設定
+                setTimeout(setupFirestoreListener, 1000); // 1秒後再試
                 return;
             }
             onSnapshot(shopsCollectionRef, (snapshot) => {
