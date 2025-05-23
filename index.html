@@ -280,12 +280,13 @@
 
         // Firebase 配置 (請替換為您自己的配置)
         const firebaseConfig = {
-          apiKey: "YOUR_API_KEY", // <-- 在此貼上您的 apiKey
-          authDomain: "YOUR_AUTH_DOMAIN", // <-- 在此貼上您的 authDomain
-          projectId: "YOUR_PROJECT_ID", // <-- 在此貼上您的 projectId
-          storageBucket: "YOUR_STORAGE_BUCKET", // <-- 在此貼上您的 storageBucket
-          messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <-- 在此貼上您的 messagingSenderId
-          appId: "YOUR_APP_ID" // <-- 在此貼上您的 appId
+          apiKey: "AIzaSyBe4RmOd4K3L8oVlANLX_1xmAyhsY0eB4k",
+          authDomain: "green-1de30.firebaseapp.com",
+          projectId: "green-1de30",
+          storageBucket: "green-1de30.firebasestorage.app",
+          messagingSenderId: "761812308263",
+          appId: "1:761812308263:web:d82a416652dd975dff5902",
+          measurementId: "G-XG5VV6QMGB"
         };
 
         // 初始化 Firebase
@@ -300,7 +301,12 @@
             if (user) {
                 // 如果是 Canvas 環境，使用 __app_id 構建集合路徑
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                shopsCollectionRef = collection(db, `artifacts/${appId}/public/data/shops`);
+                // 這裡的 'shops' 是 Firestore 集合的名稱
+                // 請確保您在 Firebase Console 的 Firestore Database 中建立了一個名為 'shops' 的集合
+                // 如果您的應用程式是在 Canvas 環境中部署，路徑會是 `artifacts/${appId}/public/data/shops`
+                // 否則，您可以直接使用 `collection(db, "shops")`
+                shopsCollectionRef = collection(db, `artifacts/${appId}/public/data/shops`); 
+                console.log("Firebase authenticated as:", user.uid);
                 console.log("Firestore collection path:", shopsCollectionRef.path);
                 setupFirestoreListener(); // 認證成功後設定 Firestore 監聽器
             } else {
@@ -314,7 +320,7 @@
                     }
                 } catch (error) {
                     console.error("Firebase authentication failed:", error);
-                    alert("Firebase 認證失敗，無法連接到資料庫。"); // 使用 alert 提示管理員
+                    alert("Firebase 認證失敗，無法連接到資料庫。請檢查網路或專案設定。"); // 使用 alert 提示管理員
                 }
             }
         });
