@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, onSnapshot, query, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore'; // 引入 Firestore 更多模組
+import { getFirestore, collection, addDoc, onSnapshot, query, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import L from 'leaflet'; // 引入 Leaflet 庫
 
 // Leaflet 預設圖標的路徑問題修正
@@ -867,6 +867,54 @@ function MessageModal({ message, onClose, currentLang }) {
     );
 }
 
+// --- 商店編輯模態視窗組件 ---
+function EditStoreModal({ store, onClose, onSave, currentLang }) {
+    const [name, setName] = useState(store.name);
+    const [address, setAddress] = useState(store.address);
+    const [type, setType] = useState(store.type);
+    const [description, setDescription] = useState(store.description);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave({ ...store, name, address, type, description });
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full transform transition-all duration-300 scale-100">
+                <h3 className="text-3xl font-bold text-gray-800 mb-6 text-center">{translations[currentLang].editStoreModalTitle}</h3>
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                        <label htmlFor="editName" className="block text-gray-700 text-sm font-bold mb-2">{translations[currentLang].storeNameLabel}</label>
+                        <input type="text" id="editName" className="shadow-sm border border-gray-300 rounded-lg w-full py-3 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500" value={name} onChange={(e) => setName(e.target.value)} />
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="editAddress" className="block text-gray-700 text-sm font-bold mb-2">{translations[currentLang].storeAddressLabel}</label>
+                        <input type="text" id="editAddress" className="shadow-sm border border-gray-300 rounded-lg w-full py-3 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500" value={address} onChange={(e) => setAddress(e.target.value)} />
+                    </div>
+                    <div className="mb-4">
+                        <label htmlFor="editType" className="block text-gray-700 text-sm font-bold mb-2">{translations[currentLang].storeTypeLabel}</label>
+                        <input type="text" id="editType" className="shadow-sm border border-gray-300 rounded-lg w-full py-3 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500" value={type} onChange={(e) => setType(e.target.value)} />
+                    </div>
+                    <div className="mb-6">
+                        <label htmlFor="editDescription" className="block text-gray-700 text-sm font-bold mb-2">{translations[currentLang].storeDescriptionLabel}</label>
+                        <textarea id="editDescription" rows="3" className="shadow-sm border border-gray-300 rounded-lg w-full py-3 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 resize-y" value={description} onChange={(e) => setDescription(e.target.value)} />
+                    </div>
+                    <div className="flex justify-end gap-3">
+                        <button type="button" onClick={onClose} className="bg-gray-300 text-gray-800 px-6 py-2 rounded-full font-medium hover:bg-gray-400 transition-colors duration-200 shadow-md">
+                            {translations[currentLang].cancelBtn}
+                        </button>
+                        <button type="submit" className="bg-gradient-to-r from-green-500 to-green-700 text-white px-6 py-2 rounded-full font-medium hover:from-green-600 hover:to-green-800 transition-colors duration-200 shadow-md">
+                            {translations[currentLang].saveChangesBtn}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+
 // --- 登入組件 ---
 function Login({ setRoute, currentLang }) {
     const { login } = useContext(AuthContext);
@@ -1037,35 +1085,56 @@ function PublicView({ currentLang, setRoute }) {
         return () => unsubscribe();
     }, []);
 
-    // 模擬 shopDetails 數據，以備地圖需要特定格式的資料，如果Firestore中沒有經緯度
-    // 或者可以調整map marker的數據來源直接從firestore的shops中提取
-    const mapShops = shops.map(shop => ({
-        id: shop.id,
-        lat: shop.latitude || 25.0330, // 假設Firestore有經緯度，否則給預設值
-        lng: shop.longitude || 121.5500,
-        name: shop.name,
-        type: shop.type,
-        address: shop.address,
-        description: shop.description
-    }));
+    // 篩選和搜尋邏輯 (簡化，僅為示例)
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterCategory, setFilterCategory] = useState('all');
+
+    const filteredShops = shops.filter(shop => {
+        const matchesSearch = searchTerm === '' || 
+                              shop.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              shop.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              shop.description.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = filterCategory === 'all' || 
+                               (shop.type && shop.type.toLowerCase() === filterCategory.toLowerCase());
+        return matchesSearch && matchesCategory;
+    });
+
 
     useEffect(() => {
         let mapInstance;
-        // 確保 Leaflet 庫已載入
+        const initialLatLng = [25.0330, 121.5654]; // 台北市中心附近
         if (typeof L !== 'undefined') {
-            mapInstance = L.map('public-sustainability-map').setView([25.0330, 121.5654], 13);
+            const mapElement = document.getElementById('public-sustainability-map');
+            if (mapElement && mapElement._leaflet_id === undefined) { // 避免重複初始化
+                mapInstance = L.map('public-sustainability-map').setView(initialLatLng, 13);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(mapInstance);
+            } else if (mapElement) {
+                mapInstance = mapElement._leaflet_id ? L.DomUtil.get(mapElement._leaflet_id) : null; // 獲取現有實例
+            }
             
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(mapInstance);
-            
-            const markersGroup = L.featureGroup();
-            mapShops.forEach(shop => {
-                const marker = L.marker([shop.lat, shop.lng]);
-                marker.bindPopup(`<b>${shop.name}</b><br>${shop.type}<br>${shop.address}<br>`); // 暫時不顯示詳情按鈕
-                markersGroup.addLayer(marker);
-            });
-            markersGroup.addTo(mapInstance);
+            if (mapInstance) {
+                const markersGroup = L.featureGroup();
+                filteredShops.forEach(shop => {
+                    // 檢查經緯度是否存在且為數字
+                    const lat = parseFloat(shop.latitude);
+                    const lng = parseFloat(shop.longitude);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const marker = L.marker([lat, lng]);
+                        marker.bindPopup(`<b>${shop.name || translations[currentLang].notProvided}</b><br>${shop.type || translations[currentLang].notProvided}<br>${shop.address || translations[currentLang].notProvided}<br>`);
+                        markersGroup.addLayer(marker);
+                    } else {
+                        console.warn(`商店 ${shop.name} 沒有有效的經緯度:`, shop.latitude, shop.longitude);
+                    }
+                });
+                markersGroup.addTo(mapInstance);
+                // 調整地圖視圖以包含所有標記 (如果存在)
+                if (markersGroup.getLayers().length > 0) {
+                    mapInstance.fitBounds(markersGroup.getBounds());
+                }
+            }
         }
 
         return () => {
@@ -1073,7 +1142,11 @@ function PublicView({ currentLang, setRoute }) {
                 mapInstance.remove();
             }
         };
-    }, [mapShops]); // 當mapShops變動時重新渲染地圖
+    }, [filteredShops]); // 當filteredShops變動時重新渲染地圖
+
+    const handleCategoryClick = (category) => {
+        setFilterCategory(category);
+    };
 
     return (
         <main className="font-inter">
@@ -1088,14 +1161,21 @@ function PublicView({ currentLang, setRoute }) {
                 </div>
             </section>
 
-            {/* 搜尋篩選區塊 (簡化版，無實際搜尋邏輯) */}
+            {/* 搜尋篩選區塊 */}
             <section className="py-12 bg-gray-50">
                 <div className="container mx-auto px-4">
                     <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
                         <div className="mb-6">
                             <h2 className="text-2xl font-bold text-gray-800 mb-4">{translations[currentLang].searchTitle}</h2>
                             <div className="flex flex-col sm:flex-row gap-2">
-                                <input type="text" id="public-search-input" placeholder={translations[currentLang].searchPlaceholder} className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200" />
+                                <input 
+                                    type="text" 
+                                    id="public-search-input" 
+                                    placeholder={translations[currentLang].searchPlaceholder} 
+                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200" 
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
                                 <button id="public-search-button" className="bg-green-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-600 transition-colors duration-200 shadow-md">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1106,11 +1186,54 @@ function PublicView({ currentLang, setRoute }) {
                         <div>
                             <h3 className="font-medium text-gray-700 mb-3">{translations[currentLang].filterCategoryTitle}</h3>
                             <div className="flex flex-wrap gap-2" id="public-filter-buttons-container">
-                                {/* 為了簡化，這裡的篩選按鈕暫時沒有實際功能 */}
-                                <button className="tag px-3 py-1 rounded-full text-sm bg-green-200 text-green-800 hover:bg-green-300 transition-colors duration-200">{translations[currentLang].filterAll}</button>
-                                <button className="tag px-3 py-1 rounded-full text-sm bg-blue-200 text-blue-800 hover:bg-blue-300 transition-colors duration-200">{translations[currentLang].filterApparel}</button>
-                                <button className="tag px-3 py-1 rounded-full text-sm bg-yellow-200 text-yellow-800 hover:bg-yellow-300 transition-colors duration-200">{translations[currentLang].filterFood}</button>
-                                <button className="tag px-3 py-1 rounded-full text-sm bg-purple-200 text-purple-800 hover:bg-purple-300 transition-colors duration-200">{translations[currentLang].filterCafe}</button>
+                                <button 
+                                    className={`tag px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${filterCategory === 'all' ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800 hover:bg-green-300'}`}
+                                    onClick={() => handleCategoryClick('all')}
+                                >
+                                    {translations[currentLang].filterAll}
+                                </button>
+                                <button 
+                                    className={`tag px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${filterCategory === 'apparel' ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800 hover:bg-green-300'}`}
+                                    onClick={() => handleCategoryClick('apparel')}
+                                >
+                                    {translations[currentLang].filterApparel}
+                                </button>
+                                <button 
+                                    className={`tag px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${filterCategory === 'food' ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800 hover:bg-green-300'}`}
+                                    onClick={() => handleCategoryClick('food')}
+                                >
+                                    {translations[currentLang].filterFood}
+                                </button>
+                                <button 
+                                    className={`tag px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${filterCategory === 'cafe' ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800 hover:bg-green-300'}`}
+                                    onClick={() => handleCategoryClick('cafe')}
+                                >
+                                    {translations[currentLang].filterCafe}
+                                </button>
+                                <button 
+                                    className={`tag px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${filterCategory === 'homeGoods' ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800 hover:bg-green-300'}`}
+                                    onClick={() => handleCategoryClick('homeGoods')}
+                                >
+                                    {translations[currentLang].filterHomeGoods}
+                                </button>
+                                <button 
+                                    className={`tag px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${filterCategory === 'zeroWaste' ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800 hover:bg-green-300'}`}
+                                    onClick={() => handleCategoryClick('zeroWaste')}
+                                >
+                                    {translations[currentLang].filterZeroWaste}
+                                </button>
+                                <button 
+                                    className={`tag px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${filterCategory === 'secondHand' ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800 hover:bg-green-300'}`}
+                                    onClick={() => handleCategoryClick('secondHand')}
+                                >
+                                    {translations[currentLang].filterSecondHand}
+                                </button>
+                                <button 
+                                    className={`tag px-3 py-1 rounded-full text-sm font-semibold transition-colors duration-200 ${filterCategory === 'creative' ? 'bg-green-600 text-white' : 'bg-green-200 text-green-800 hover:bg-green-300'}`}
+                                    onClick={() => handleCategoryClick('creative')}
+                                >
+                                    {translations[currentLang].filterCreative}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1131,11 +1254,11 @@ function PublicView({ currentLang, setRoute }) {
             <section id="shops" className="py-12 bg-white">
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">{translations[currentLang].shopListSectionTitle}</h2>
-                    {shops.length === 0 ? (
+                    {filteredShops.length === 0 ? (
                         <p className="text-gray-600 text-center py-8">{translations[currentLang].noStoresYet}</p>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {shops.map(shop => (
+                            {filteredShops.map(shop => (
                                 <div key={shop.id} className="shop-card bg-white rounded-xl overflow-hidden shadow-md transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg border border-gray-200">
                                     <div className="h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-6xl">
                                         {/* 商店圖標或圖片佔位符 */}
@@ -1157,7 +1280,6 @@ function PublicView({ currentLang, setRoute }) {
                                                 </svg>
                                                 {shop.address || translations[currentLang].notProvided}
                                             </div>
-                                            {/* 假設沒有營業時間或電話等詳細信息用於公開列表，這裡只顯示地址 */}
                                         </div>
                                         <button className="block w-full text-center py-2 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-lg hover:from-green-600 hover:to-green-800 transition-all duration-300 font-medium shadow-md" onClick={() => {/* showShopDetail(shop.id) */}} data-i18n="viewDetailsBtn">
                                             {translations[currentLang].viewDetailsBtn}
