@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, onSnapshot, query, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, onSnapshot, query, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore'; // 引入 Firestore 更多模組
 import L from 'leaflet'; // 引入 Leaflet 庫
 
 // Leaflet 預設圖標的路徑問題修正
-// 這是因為 Leaflet 預設的圖標路徑在打包後可能不正確，需要手動指定
+// 修正了 _getIconUrl 屬性名稱中的拼寫錯誤 (刪除了中間的空格)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -465,12 +465,7 @@ const translations = {
         storeUpdatedSuccess: 'Laden erfolgreich aktualisiert!',
         storeUpdateFailed: 'Aktualisierung des Ladens fehlgeschlagen: ',
         adminAccessRequired: 'Sie haben keine Berechtigung, auf diese Seite zuzugreifen. Bitte melden Sie sich als Administrator an.',
-        goToHomePage: 'Zur Startseite',
-        editStoreModalTitle: 'Laden bearbeiten',
-        saveChangesBtn: 'Änderungen speichern',
-        cancelBtn: 'Abbrechen',
-        publicViewTitle: 'Karte der Nachhaltigen Geschäfte',
-        publicViewSubtitle: 'Entdecken Sie nachhaltige Geschäfte in Taiwan und finden Sie Unternehmen, die Umweltschutz, fairen Handel und nachhaltige Entwicklung unterstützen.'
+        goToHomePage: 'Zur Startseite'
     },
     'es': {
         pageTitle: 'Mapa de Tiendas Sostenibles - Inicio',
@@ -566,21 +561,7 @@ const translations = {
         storeAddedSuccess: '¡Tienda añadida con éxito!',
         storeAddFailed: 'Error al añadir tienda: ',
         storeListTitle: 'Lista de tiendas existentes',
-        noStoresYet: 'Aún no hay tiendas. ¡Añada una!',
-        editStoreBtn: 'Editar',
-        deleteStoreBtn: 'Eliminar',
-        confirmDelete: '¿Está seguro de que desea eliminar esta tienda?',
-        storeDeletedSuccess: '¡Tienda eliminada con éxito!',
-        storeDeleteFailed: 'Error al eliminar tienda: ',
-        storeUpdatedSuccess: '¡Tienda actualizada con éxito!',
-        storeUpdateFailed: 'Error al actualizar tienda: ',
-        adminAccessRequired: 'No tiene permiso para acceder a esta página. Por favor, inicie sesión como administrador.',
-        goToHomePage: 'Ir a la página de inicio',
-        editStoreModalTitle: 'Editar tienda',
-        saveChangesBtn: 'Guardar cambios',
-        cancelBtn: 'Cancelar',
-        publicViewTitle: 'Mapa de Tiendas Sostenibles',
-        publicViewSubtitle: 'Explore tiendas sostenibles en Taiwán y encuentre negocios que apoyan la protección del medio ambiente, el comercio justo y el desarrollo sostenible.'
+        noStoresYet: 'Aún no hay tiendas. ¡Añada una!'
     },
     'la': {
         pageTitle: 'Tabula Copiarum Sustentabilium - Pagina Prima',
@@ -685,12 +666,7 @@ const translations = {
         storeUpdatedSuccess: 'Copia feliciter updated!',
         storeUpdateFailed: 'Defuit ad update copiam: ',
         adminAccessRequired: 'Non habes licentiam ad hanc paginam. Quaeso, ini in ratione administratoris.',
-        goToHomePage: 'Ire ad Pagina Prima',
-        editStoreModalTitle: 'Edit Copiam',
-        saveChangesBtn: 'Serva Mutationes',
-        cancelBtn: 'Cancella',
-        publicViewTitle: 'Tabula Copiarum Sustentabilium',
-        publicViewSubtitle: 'Explora copias sustentabiles in Taiwan et reperi negotia quae tutelam naturae, commercium aequum, et progressionem sustentabilem adiuvant.'
+        goToHomePage: 'Ire ad Pagina Prima'
     },
     'ja': {
         pageTitle: 'サステナブルショップマップ - ホーム',
@@ -757,50 +733,7 @@ const translations = {
         notProvided: '提供されていません',
         newsletterSuccess: 'ご購読ありがとうございます！最新情報をお届けします。',
         newsletterInvalidEmail: '有効なメールアドレスを入力してください。',
-        newsletterError: '購読に失敗しました。後でもう一度お試しください。',
-        loginTitle: 'アカウントにログイン',
-        registerTitle: '新規アカウント登録',
-        emailLabel: 'メールアドレス',
-        emailPlaceholder: 'メールアドレスを入力してください',
-        passwordLabel: 'パスワード',
-        passwordPlaceholder: 'パスワードを入力してください',
-        loginBtn: 'ログイン',
-        registerBtn: '登録',
-        logoutBtn: 'ログアウト',
-        loginSuccess: 'ログインに成功しました！',
-        loginFailed: 'ログインに失敗しました。メールアドレスまたはパスワードを確認してください。',
-        registerSuccess: '登録に成功しました！ログインしてください。',
-        registerFailed: '登録に失敗しました：',
-        missingFields: 'すべての項目を入力してください。',
-        adminDashboardTitle: '管理ダッシュボード',
-        addStoreTitle: '新しい店舗を追加',
-        storeNameLabel: '店舗名',
-        storeNamePlaceholder: '店舗名を入力してください',
-        storeAddressLabel: '店舗住所',
-        storeAddressPlaceholder: '店舗住所を入力してください',
-        storeTypeLabel: '店舗カテゴリ',
-        storeTypePlaceholder: '店舗カテゴリを入力してください（例：食品、アパレル）',
-        storeDescriptionLabel: '店舗説明',
-        storeDescriptionPlaceholder: '店舗の簡単な説明を入力してください',
-        addStoreBtn: '店舗を追加',
-        storeAddedSuccess: '店舗が正常に追加されました！',
-        storeAddFailed: '店舗の追加に失敗しました：',
-        storeListTitle: '既存店舗リスト',
-        noStoresYet: 'まだ店舗がありません。追加してください！',
-        editStoreBtn: '編集',
-        deleteStoreBtn: '削除',
-        confirmDelete: 'この店舗を削除してもよろしいですか？',
-        storeDeletedSuccess: '店舗が正常に削除されました！',
-        storeDeleteFailed: '店舗の削除に失敗しました：',
-        storeUpdatedSuccess: '店舗が正常に更新されました！',
-        storeUpdateFailed: '店舗の更新に失敗しました：',
-        adminAccessRequired: 'このページにアクセスする権限がありません。管理者としてログインしてください。',
-        goToHomePage: 'ホームページへ移動',
-        editStoreModalTitle: '店舗を編集',
-        saveChangesBtn: '変更を保存',
-        cancelBtn: 'キャンセル',
-        publicViewTitle: 'サステナブルショップマップ',
-        publicViewSubtitle: '台湾の持続可能な店舗を探索し、環境保護、フェアトレード、持続可能な開発を支援するビジネスを見つけてください。'
+        newsletterError: '購読に失敗しました。後でもう一度お試しください。'
     }
 };
 
