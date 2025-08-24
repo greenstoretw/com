@@ -49,6 +49,9 @@
                     <a href="#subscribers" class="sidebar-link block py-3 px-6 text-gray-700" data-page="subscribers">
                         訂閱者管理
                     </a>
+                    <a href="#announcements" class="sidebar-link block py-3 px-6 text-gray-700" data-page="announcements">
+                        公告管理
+                    </a>
                 </nav>
             </div>
 
@@ -72,9 +75,7 @@
                                         <th class="py-3 px-6 text-left">操作</th>
                                     </tr>
                                 </thead>
-                                <tbody id="shops-table-body">
-                                    <!-- Shop rows will be injected here -->
-                                </tbody>
+                                <tbody id="shops-table-body"></tbody>
                             </table>
                         </div>
                     </div>
@@ -83,9 +84,19 @@
                     <div id="page-subscribers" class="page-content">
                         <h2 class="text-3xl font-bold mb-6">訂閱者列表</h2>
                         <div class="bg-white shadow-md rounded-lg">
-                             <ul id="subscribers-list" class="divide-y divide-gray-200">
-                                <!-- Subscriber emails will be injected here -->
-                             </ul>
+                             <ul id="subscribers-list" class="divide-y divide-gray-200"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Announcements Page -->
+                    <div id="page-announcements" class="page-content">
+                        <h2 class="text-3xl font-bold mb-6">發布網站公告</h2>
+                        <div class="bg-white shadow-md rounded-lg p-6">
+                            <label for="announcement-content" class="block text-gray-700 text-sm font-bold mb-2">公告內容 (留白表示不顯示公告):</label>
+                            <textarea id="announcement-content" rows="10" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                            <button id="publish-announcement-button" class="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                發布公告
+                            </button>
                         </div>
                     </div>
 
@@ -100,13 +111,10 @@
             <form id="shop-form" class="p-8">
                 <div class="flex justify-between items-center mb-6">
                     <h3 id="modal-title" class="text-2xl font-bold">新增商店</h3>
-                    <!-- ✅ 修正：新增翻譯按鈕 -->
                     <button type="button" id="translate-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">自動翻譯成英文</button>
                 </div>
                 <input type="hidden" id="edit-shop-id">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Fields will be dynamically generated here -->
-                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
                 <div class="mt-8 flex justify-end">
                     <button type="button" id="cancel-modal-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">取消</button>
                     <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">儲存</button>
@@ -151,6 +159,7 @@
         'lng': '經度 (Longitude)'
     };
 
+
     // ===== DOM ELEMENTS =====
     const loginView = document.getElementById('login-view');
     const dashboardView = document.getElementById('dashboard-view');
@@ -164,6 +173,8 @@
     const modalTitle = document.getElementById('modal-title');
     const editShopIdInput = document.getElementById('edit-shop-id');
     const translateButton = document.getElementById('translate-button');
+    const announcementContent = document.getElementById('announcement-content');
+    const publishAnnouncementButton = document.getElementById('publish-announcement-button');
     
     // ===== STATE =====
     let allShopsData = {};
@@ -241,6 +252,13 @@
             subscribersList.innerHTML = data.emails.map(email => 
                 `<li class="p-4">${email}</li>`
             ).join('');
+        }
+    }
+
+    async function loadAnnouncement() {
+        const data = await fetchData('getAnnouncement');
+        if (data) {
+            announcementContent.value = data.announcement || '';
         }
     }
 
@@ -330,16 +348,15 @@
         if (e.key === 'Enter') loginButton.click();
     });
 
-    document.querySelector('.sidebar-link[data-page="shops"]').addEventListener('click', (e) => {
-        e.preventDefault();
-        showPage('shops');
-        loadShops();
-    });
-
-    document.querySelector('.sidebar-link[data-page="subscribers"]').addEventListener('click', (e) => {
-        e.preventDefault();
-        showPage('subscribers');
-        loadSubscribers();
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const pageId = e.target.dataset.page;
+            showPage(pageId);
+            if (pageId === 'shops') loadShops();
+            if (pageId === 'subscribers') loadSubscribers();
+            if (pageId === 'announcements') loadAnnouncement();
+        });
     });
     
     document.getElementById('add-shop-button').addEventListener('click', () => openShopModal());
@@ -355,12 +372,10 @@
         }
     });
 
-    // ✅ 修正：新增翻譯按鈕的事件監聽器
     translateButton.addEventListener('click', async () => {
         const fieldsToTranslate = [
             'name', 'type', 'address', 'hours', 'description', 'longDescription', 'sustainability', 'tags'
         ];
-        
         const textsToTranslate = {};
         let hasText = false;
 
@@ -392,9 +407,7 @@
         if (result && result.translatedTexts) {
             for (const [fieldId, translatedText] of Object.entries(result.translatedTexts)) {
                 const targetInput = document.getElementById(fieldId);
-                if (targetInput) {
-                    targetInput.value = translatedText;
-                }
+                if (targetInput) targetInput.value = translatedText;
             }
         } else {
             alert('翻譯失敗，請稍後再試。');
@@ -402,6 +415,14 @@
 
         translateButton.disabled = false;
         translateButton.textContent = '自動翻譯成英文';
+    });
+    
+    publishAnnouncementButton.addEventListener('click', async () => {
+        const content = announcementContent.value;
+        const result = await postData({ action: 'setAnnouncement', content: content });
+        if (result) {
+            alert('公告已發布！');
+        }
     });
 
     </script>
