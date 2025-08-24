@@ -202,11 +202,14 @@
         }
     }
 
+    // ✅ 修正：為 postData 函式加上 'Content-Type' 標頭
     async function postData(payload) {
         try {
             const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8', // Apps Script needs this for JSON parsing
+                },
                 body: JSON.stringify(payload)
             });
              if (!response.ok) throw new Error('Network response was not ok.');
