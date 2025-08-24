@@ -125,7 +125,7 @@
     
     <script>
     // ===== CONFIGURATION =====
-    const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwREhwZHhBDzHj5KWMlayvzmQ4jGNIbW74CYCqQYIuDdEMqgp5pNnbneoVhk4esFjx7fQ/exec';
+    const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJO4SpEbNly7WweAHf0pGu8DGdwCqUrmvLBb29xujm3u2FgPo8Bb-A3y324e_fmnWRcA/exec';
     const ADMIN_PASSWORD = 'index@1215312836';
     const SHOP_FIELDS = [
         'id', 'name_zh-TW', 'name_en', 'type_zh-TW', 'type_en', 'address_zh-TW', 'address_en',
@@ -206,9 +206,7 @@
         try {
             const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8', 
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
              if (!response.ok) throw new Error('Network response was not ok.');
@@ -430,4 +428,3 @@
     </script>
 </body>
 </html>
-
