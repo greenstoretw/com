@@ -6,6 +6,7 @@
     <title>後台管理系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; }
         .modal { display: none; }
@@ -43,6 +44,9 @@
                     <h1 class="text-2xl font-bold text-green-600">管理系統</h1>
                 </div>
                 <nav class="mt-4">
+                    <a href="#dashboard" class="sidebar-link block py-3 px-6 text-gray-700" data-page="dashboard">
+                        儀表板
+                    </a>
                     <a href="#shops" class="sidebar-link block py-3 px-6 text-gray-700" data-page="shops">
                         商店管理
                     </a>
@@ -59,11 +63,37 @@
             <div class="flex-1 flex flex-col overflow-hidden">
                 <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-8">
                     
+                    <!-- Dashboard Page -->
+                    <div id="page-dashboard" class="page-content">
+                        <h2 class="text-3xl font-bold mb-6">儀表板</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div class="bg-white p-6 rounded-lg shadow-md">
+                                <h3 class="text-lg font-semibold text-gray-600">商店總數</h3>
+                                <p id="total-shops" class="text-4xl font-bold text-green-600">0</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md">
+                                <h3 class="text-lg font-semibold text-gray-600">訂閱者總數</h3>
+                                <p id="total-subscribers" class="text-4xl font-bold text-blue-600">0</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md">
+                                <h3 class="text-lg font-semibold text-gray-600">問題回報數 (待處理)</h3>
+                                <p id="issue-reports" class="text-4xl font-bold text-red-600">N/A</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-4">訂閱者增長趨勢 (過去30天)</h3>
+                            <canvas id="subscribers-chart"></canvas>
+                        </div>
+                    </div>
+
                     <!-- Shops Page -->
                     <div id="page-shops" class="page-content">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-3xl font-bold">商店列表</h2>
-                            <button id="add-shop-button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">新增商店</button>
+                            <div>
+                                <button id="batch-upload-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">批次上傳</button>
+                                <button id="add-shop-button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">新增商店</button>
+                            </div>
                         </div>
                         <div class="bg-white shadow-md rounded-lg overflow-x-auto">
                             <table class="min-w-full bg-white">
@@ -82,7 +112,10 @@
 
                     <!-- Subscribers Page -->
                     <div id="page-subscribers" class="page-content">
-                        <h2 class="text-3xl font-bold mb-6">訂閱者列表</h2>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-3xl font-bold">訂閱者列表</h2>
+                            <button id="export-csv-button" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">匯出 CSV</button>
+                        </div>
                         <div class="bg-white shadow-md rounded-lg">
                              <ul id="subscribers-list" class="divide-y divide-gray-200"></ul>
                         </div>
@@ -123,9 +156,24 @@
         </div>
     </div>
     
+    <!-- Batch Upload Modal -->
+    <div id="batch-upload-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
+            <div class="p-8">
+                <h3 class="text-2xl font-bold mb-4">批次上傳商店</h3>
+                <p class="mb-4 text-gray-600">請上傳 CSV 或 Excel 檔案。檔案格式需包含與新增商店欄位完全相同的表頭。</p>
+                <input type="file" id="batch-file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"/>
+                <div class="mt-6 flex justify-end">
+                    <button type="button" id="cancel-batch-upload-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">取消</button>
+                    <button type="button" id="submit-batch-upload-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">上傳</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
     // ===== CONFIGURATION =====
-    // [MODIFIED] Updated Google Apps Script URL
     const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4NR0LWj6j27lB_1-LxIDthj2ihaGyEQTQ1hqUNMyX5KC7a1bQtzpZwJYQVvq-6aILUA/exec';
     const ADMIN_PASSWORD = 'index@1215312836';
     const SHOP_FIELDS = [
@@ -136,30 +184,15 @@
     ];
     
     const FIELD_LABELS = {
-        'id': '商店 ID (請用英文，不可重複)',
-        'name_zh-TW': '商店名稱 (中文)',
-        'name_en': '商店名稱 (英文)',
-        'type_zh-TW': '類別 (中文)',
-        'type_en': '類別 (英文)',
-        'address_zh-TW': '地址 (中文)',
-        'address_en': '地址 (英文)',
-        'hours_zh-TW': '營業時間 (中文)',
-        'hours_en': '營業時間 (英文)',
-        'phone': '電話',
-        'email': '電子郵件',
-        'website': '網站',
-        'description_zh-TW': '簡短描述 (中文)',
-        'description_en': '簡短描述 (英文)',
-        'longDescription_zh-TW': '詳細介紹 (中文)',
-        'longDescription_en': '詳細介紹 (英文)',
-        'sustainability_zh-TW': '永續理念 (中文)',
-        'sustainability_en': '永續理念 (英文)',
-        'tags_zh-TW': '標籤 (中文，用逗號分隔)',
-        'tags_en': '標籤 (英文，用逗號分隔)',
-        'lat': '緯度 (Latitude)',
-        'lng': '經度 (Longitude)'
+        'id': '商店 ID (請用英文，不可重複)', 'name_zh-TW': '商店名稱 (中文)', 'name_en': '商店名稱 (英文)',
+        'type_zh-TW': '類別 (中文)', 'type_en': '類別 (英文)', 'address_zh-TW': '地址 (中文)', 'address_en': '地址 (英文)',
+        'hours_zh-TW': '營業時間 (中文)', 'hours_en': '營業時間 (英文)', 'phone': '電話', 'email': '電子郵件',
+        'website': '網站', 'description_zh-TW': '簡短描述 (中文)', 'description_en': '簡短描述 (英文)',
+        'longDescription_zh-TW': '詳細介紹 (中文)', 'longDescription_en': '詳細介紹 (英文)',
+        'sustainability_zh-TW': '永續理念 (中文)', 'sustainability_en': '永續理念 (英文)',
+        'tags_zh-TW': '標籤 (中文，用逗號分隔)', 'tags_en': '標籤 (英文，用逗號分隔)',
+        'lat': '緯度 (Latitude)', 'lng': '經度 (Longitude)'
     };
-
 
     // ===== DOM ELEMENTS =====
     const loginView = document.getElementById('login-view');
@@ -176,9 +209,12 @@
     const translateButton = document.getElementById('translate-button');
     const announcementContent = document.getElementById('announcement-content');
     const publishAnnouncementButton = document.getElementById('publish-announcement-button');
-    
+    const batchUploadModal = document.getElementById('batch-upload-modal');
+
     // ===== STATE =====
     let allShopsData = {};
+    let allSubscribersData = [];
+    let subscribersChartInstance = null;
 
     // ===== FUNCTIONS =====
 
@@ -189,12 +225,6 @@
         document.querySelector(`.sidebar-link[data-page="${pageId}"]`).classList.add('active');
     }
     
-    /**
-     * [MODIFIED] Fetches data using GET request with robust error handling.
-     * It reads the response as text first to avoid JSON parsing errors on non-JSON server responses.
-     * @param {string} action The API action to perform.
-     * @returns {Promise<object|null>} The data object from the API or null on failure.
-     */
     async function fetchData(action) {
         try {
             const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=${action}`);
@@ -218,12 +248,6 @@
         }
     }
 
-    /**
-     * [MODIFIED] Posts data using POST request with robust error handling.
-     * It sends data as 'text/plain' to avoid CORS preflight issues and handles text responses.
-     * @param {object} payload The data to send in the request body.
-     * @returns {Promise<object|null>} The result from the API or null on failure.
-     */
     async function postData(payload) {
         try {
             const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
@@ -269,6 +293,91 @@
         });
     }
 
+    function renderSubscribers() {
+        subscribersList.innerHTML = allSubscribersData.map(subscriber => 
+            `<li class="p-4 flex justify-between items-center">
+                <span>${subscriber.email}</span>
+                <button class="text-red-500 hover:underline delete-subscriber-btn" data-email="${subscriber.email}">刪除</button>
+            </li>`
+        ).join('');
+    }
+
+    // [MODIFIED] Load dashboard data with real chart data
+    async function loadDashboardData() {
+        document.getElementById('total-shops').textContent = Object.keys(allShopsData).length;
+        document.getElementById('total-subscribers').textContent = allSubscribersData.length;
+        
+        // --- Chart Logic with Real Data ---
+        const dailyCounts = {};
+        for (let i = 0; i < 30; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const key = d.toISOString().split('T')[0]; // YYYY-MM-DD format
+            dailyCounts[key] = 0;
+        }
+
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        allSubscribersData.forEach(sub => {
+            if (sub.timestamp && new Date(sub.timestamp) >= thirtyDaysAgo) {
+                const key = new Date(sub.timestamp).toISOString().split('T')[0];
+                if (dailyCounts[key] !== undefined) {
+                    dailyCounts[key]++;
+                }
+            }
+        });
+
+        const sortedCounts = Object.entries(dailyCounts).sort((a, b) => a[0].localeCompare(b[0]));
+        
+        const labels = sortedCounts.map(entry => {
+            const [year, month, day] = entry[0].split('-');
+            return `${parseInt(month, 10)}/${parseInt(day, 10)}`;
+        });
+        const data = sortedCounts.map(entry => entry[1]);
+
+        const ctx = document.getElementById('subscribers-chart').getContext('2d');
+        if (subscribersChartInstance) {
+            subscribersChartInstance.destroy();
+        }
+        subscribersChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '新增訂閱人數',
+                    data: data,
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                           stepSize: 1 
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // [MODIFIED] Load all data and handle new subscriber data structure
+    async function loadAllData() {
+        const shopsData = await fetchData('getShops');
+        if (shopsData) allShopsData = shopsData.shops;
+
+        const subscribersData = await fetchData('getEmails');
+        if (subscribersData && subscribersData.subscribers) {
+            allSubscribersData = subscribersData.subscribers;
+        }
+    }
+
     async function loadShops() {
         const data = await fetchData('getShops');
         if (data) {
@@ -276,13 +385,13 @@
             renderShops();
         }
     }
-
+    
+    // [MODIFIED] Load subscribers and handle new data structure
     async function loadSubscribers() {
         const data = await fetchData('getEmails');
-        if (data && data.emails) {
-            subscribersList.innerHTML = data.emails.map(email => 
-                `<li class="p-4">${email}</li>`
-            ).join('');
+        if (data && data.subscribers) {
+            allSubscribersData = data.subscribers;
+            renderSubscribers();
         }
     }
 
@@ -319,10 +428,12 @@
             const shopData = allShopsData[shopId];
             createFormFields(shopData);
             editShopIdInput.value = shopId;
+            document.getElementById('id').readOnly = true; // ID不可編輯
         } else {
             modalTitle.textContent = '新增商店';
             createFormFields();
             editShopIdInput.value = '';
+            document.getElementById('id').readOnly = false;
         }
         shopModal.classList.add('active');
     }
@@ -331,9 +442,32 @@
         shopModal.classList.remove('active');
         shopForm.reset();
     }
+    
+    function validateShopForm() {
+        const lat = document.getElementById('lat').value;
+        const lng = document.getElementById('lng').value;
+        const id = document.getElementById('id').value;
+        
+        if (isNaN(parseFloat(lat)) || !isFinite(lat)) {
+            alert('緯度必須是數字！');
+            return false;
+        }
+        if (isNaN(parseFloat(lng)) || !isFinite(lng)) {
+            alert('經度必須是數字！');
+            return false;
+        }
+        if (!editShopIdInput.value && allShopsData[id]) {
+            alert('商店 ID 已存在，不可重複！');
+            return false;
+        }
+        return true;
+    }
+
 
     async function handleFormSubmit(e) {
         e.preventDefault();
+        if (!validateShopForm()) return;
+
         const formData = new FormData(shopForm);
         const shopData = {};
         formData.forEach((value, key) => {
@@ -363,14 +497,64 @@
         }
     }
 
+    async function handleDeleteSubscriber(email) {
+        if (!confirm(`確定要刪除訂閱者 "${email}" 嗎？`)) {
+            return;
+        }
+        // [MODIFIED] Changed action to 'deleteEmail' to match backend
+        const payload = { action: 'deleteEmail', email };
+        const result = await postData(payload);
+        if (result) {
+            await loadSubscribers();
+            await loadDashboardData(); // Refresh dashboard data after deletion
+            alert('刪除成功！');
+        }
+    }
+
+    function exportSubscribersToCSV() {
+        const headers = ['email', 'timestamp'];
+        const rows = allSubscribersData.map(sub => [sub.email, sub.timestamp]);
+        let csvContent = "data:text/csv;charset=utf-8," 
+            + headers.join(",") + "\n" 
+            + rows.map(e => e.join(",")).join("\n");
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "subscribers.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    function openBatchUploadModal() {
+        batchUploadModal.classList.add('active');
+    }
+
+    function closeBatchUploadModal() {
+        batchUploadModal.classList.remove('active');
+        document.getElementById('batch-file-input').value = '';
+    }
+    
+    async function handleBatchUpload() {
+        const fileInput = document.getElementById('batch-file-input');
+        if (fileInput.files.length === 0) {
+            alert('請選擇一個檔案！');
+            return;
+        }
+        alert('批次上傳功能需要後端支援，此為前端介面示意。');
+    }
+
+
     // ===== EVENT LISTENERS =====
     
-    loginButton.addEventListener('click', () => {
+    loginButton.addEventListener('click', async () => {
         if (passwordInput.value === ADMIN_PASSWORD) {
             loginView.style.display = 'none';
             dashboardView.style.display = 'block';
-            showPage('shops');
-            loadShops();
+            await loadAllData();
+            showPage('dashboard');
+            loadDashboardData();
         } else {
             loginError.classList.remove('hidden');
         }
@@ -384,8 +568,9 @@
             e.preventDefault();
             const pageId = e.target.dataset.page;
             showPage(pageId);
-            if (pageId === 'shops') loadShops();
-            if (pageId === 'subscribers') loadSubscribers();
+            if (pageId === 'dashboard') loadDashboardData();
+            if (pageId === 'shops') renderShops();
+            if (pageId === 'subscribers') renderSubscribers();
             if (pageId === 'announcements') loadAnnouncement();
         });
     });
@@ -402,6 +587,18 @@
             handleDeleteShop(e.target.dataset.id);
         }
     });
+
+    subscribersList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-subscriber-btn')) {
+            handleDeleteSubscriber(e.target.dataset.email);
+        }
+    });
+
+    document.getElementById('export-csv-button').addEventListener('click', exportSubscribersToCSV);
+
+    document.getElementById('batch-upload-button').addEventListener('click', openBatchUploadModal);
+    document.getElementById('cancel-batch-upload-button').addEventListener('click', closeBatchUploadModal);
+    document.getElementById('submit-batch-upload-button').addEventListener('click', handleBatchUpload);
 
     translateButton.addEventListener('click', async () => {
         const fieldsToTranslate = [
