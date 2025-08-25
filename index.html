@@ -125,7 +125,8 @@
     
     <script>
     // ===== CONFIGURATION =====
-    const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwREhwZHhBDzHj5KWMlayvzmQ4jGNIbW74CYCqQYIuDdEMqgp5pNnbneoVhk4esFjx7fQ/exec';
+    // [MODIFIED] Updated Google Apps Script URL
+    const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4NR0LWj6j27lB_1-LxIDthj2ihaGyEQTQ1hqUNMyX5KC7a1bQtzpZwJYQVvq-6aILUA/exec';
     const ADMIN_PASSWORD = 'index@1215312836';
     const SHOP_FIELDS = [
         'id', 'name_zh-TW', 'name_en', 'type_zh-TW', 'type_en', 'address_zh-TW', 'address_en',
@@ -188,33 +189,63 @@
         document.querySelector(`.sidebar-link[data-page="${pageId}"]`).classList.add('active');
     }
     
+    /**
+     * [MODIFIED] Fetches data using GET request with robust error handling.
+     * It reads the response as text first to avoid JSON parsing errors on non-JSON server responses.
+     * @param {string} action The API action to perform.
+     * @returns {Promise<object|null>} The data object from the API or null on failure.
+     */
     async function fetchData(action) {
         try {
             const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=${action}`);
-            if (!response.ok) throw new Error('Network response was not ok.');
-            const data = await response.json();
-            if (!data.success) throw new Error(data.error || 'API returned an error.');
-            return data;
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`網路回應不正常。狀態碼: ${response.status}. 回應內容: ${errorText}`);
+            }
+            const text = await response.text();
+            try {
+                const data = JSON.parse(text);
+                if (!data.success) throw new Error(data.error || 'API 回傳錯誤');
+                return data;
+            } catch (jsonError) {
+                console.error('解析 JSON 失敗:', text);
+                throw new Error('從伺服器收到了無效的資料格式。');
+            }
         } catch (error) {
-            console.error(`Error fetching ${action}:`, error);
+            console.error(`讀取 ${action} 時發生錯誤:`, error);
             alert(`讀取資料失敗：${error.message}`);
             return null;
         }
     }
 
+    /**
+     * [MODIFIED] Posts data using POST request with robust error handling.
+     * It sends data as 'text/plain' to avoid CORS preflight issues and handles text responses.
+     * @param {object} payload The data to send in the request body.
+     * @returns {Promise<object|null>} The result from the API or null on failure.
+     */
     async function postData(payload) {
         try {
             const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(payload)
             });
-             if (!response.ok) throw new Error('Network response was not ok.');
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error || 'API returned an error.');
-            return result;
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`網路回應不正常。狀態碼: ${response.status}. 回應內容: ${errorText}`);
+            }
+            const text = await response.text();
+            try {
+                const result = JSON.parse(text);
+                if (!result.success) throw new Error(result.error || 'API 回傳錯誤');
+                return result;
+            } catch (jsonError) {
+                console.error('解析 JSON 回應失敗:', text);
+                throw new Error('從伺服器收到了無效的資料格式。');
+            }
         } catch (error) {
-            console.error('Error posting data:', error);
+            console.error('提交資料時發生錯誤:', error);
             alert(`操作失敗：${error.message}`);
             return null;
         }
