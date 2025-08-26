@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparsem.in.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; }
         .modal { display: none; }
@@ -136,8 +136,36 @@
     </div>
 
     <!-- Modals -->
-    <div id="shop-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center"><div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"><form id="shop-form" class="p-8"><div class="flex justify-between items-center mb-6"><h3 id="modal-title" class="text-2xl font-bold">新增商店</h3><button type="button" id="translate-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">自動翻譯成英文</button></div><input type="hidden" id="edit-shop-id"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"></div><div class="mt-8 flex justify-end"><button type="button" id="cancel-modal-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">取消</button><button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">儲存</button></div></form></div></div>
-    <div id="batch-upload-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center"><div class="bg-white rounded-lg shadow-xl w-full max-w-lg"><div class="p-8"><h3 class="text-2xl font-bold mb-4">批次上傳商店</h3><p class="mb-4 text-gray-600">請上傳 CSV 檔案。檔案格式需包含與新增商店欄位完全相同的表頭。系統會根據 ID 自動判斷要新增還是更新商店。</p><input type="file" id="batch-file-input" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"/><div class="mt-6 flex justify-end items-center"><div id="batch-loader" class="loader mr-4 hidden"></div><button type="button" id="cancel-batch-upload-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">取消</button><button type="button" id="submit-batch-upload-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">上傳</button></div></div></div></div>
+    <div id="shop-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <form id="shop-form" class="p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="modal-title" class="text-2xl font-bold">新增商店</h3>
+                    <button type="button" id="translate-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">自動翻譯成英文</button>
+                </div>
+                <input type="hidden" id="edit-shop-id">
+                <div id="shop-form-fields" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                <div class="mt-8 flex justify-end">
+                    <button type="button" id="cancel-modal-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">取消</button>
+                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="batch-upload-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
+            <div class="p-8">
+                <h3 class="text-2xl font-bold mb-4">批次上傳商店</h3>
+                <p class="mb-4 text-gray-600">請上傳 CSV 檔案。檔案格式需包含與新增商店欄位完全相同的表頭。系統會根據 ID 自動判斷要新增還是更新商店。</p>
+                <input type="file" id="batch-file-input" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"/>
+                <div class="mt-6 flex justify-end items-center">
+                    <div id="batch-loader" class="loader mr-4 hidden"></div>
+                    <button type="button" id="cancel-batch-upload-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">取消</button>
+                    <button type="button" id="submit-batch-upload-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">上傳</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
     // ===== CONFIGURATION & STATE =====
@@ -151,13 +179,6 @@
 
     // ===== SECURITY & API CALLS =====
     
-    /**
-     * [SECURITY] Centralized API call function. Handles auth token for admin actions.
-     * @param {string} action The backend action to call.
-     * @param {object} payload The data to send.
-     * @param {boolean} isAdminAction Whether this action requires admin authentication.
-     * @returns {Promise<object>} The JSON response from the backend.
-     */
     async function apiCall(action, payload = {}, isAdminAction = false) {
         if (isAdminAction && !adminAuthToken) {
             alert('驗證權杖遺失，請重新登入。');
@@ -193,12 +214,11 @@
 
     function renderShops() {
         const tableBody = document.getElementById('shops-table-body');
-        tableBody.innerHTML = ''; // Clear existing rows
+        tableBody.innerHTML = '';
         Object.values(allShopsData).forEach(shop => {
             const row = tableBody.insertRow();
             row.className = 'border-b';
             
-            // [SECURITY] Use textContent to prevent XSS
             const cellId = row.insertCell();
             cellId.className = 'py-3 px-6';
             cellId.textContent = shop.id;
@@ -232,7 +252,7 @@
 
     function renderSubscribers() {
         const list = document.getElementById('subscribers-list');
-        list.innerHTML = ''; // Clear list
+        list.innerHTML = '';
         allSubscribersData.forEach(subscriber => {
             const li = document.createElement('li');
             li.className = 'p-4 flex justify-between items-center';
@@ -251,7 +271,6 @@
         });
     }
     
-    // Other functions (loadDashboardData, loadAllData, etc.) remain largely the same...
     async function loadDashboardData() {
         document.getElementById('total-shops').textContent = Object.keys(allShopsData).length;
         document.getElementById('total-subscribers').textContent = allSubscribersData.length;
@@ -296,6 +315,99 @@
         if (subscribersResult) allSubscribersData = subscribersResult.subscribers;
     }
 
+    // ===== MODAL & FORM HANDLING =====
+
+    function openShopModal(shopId = null) {
+        const modal = document.getElementById('shop-modal');
+        const form = document.getElementById('shop-form');
+        const fieldsContainer = document.getElementById('shop-form-fields');
+        const modalTitle = document.getElementById('modal-title');
+        const editShopIdInput = document.getElementById('edit-shop-id');
+        
+        form.reset();
+        fieldsContainer.innerHTML = '';
+        
+        const shopData = shopId ? allShopsData[shopId] : {};
+
+        SHOP_FIELDS.forEach(field => {
+            const isTextarea = field.toLowerCase().includes('description') || field.toLowerCase().includes('sustainability');
+            const value = shopData[field] || '';
+            const labelText = FIELD_LABELS[field] || field;
+
+            const container = document.createElement('div');
+            if (isTextarea) container.className = 'md:col-span-2';
+
+            const label = document.createElement('label');
+            label.htmlFor = field;
+            label.className = 'block text-sm font-medium text-gray-700';
+            label.textContent = labelText;
+
+            const input = document.createElement(isTextarea ? 'textarea' : 'input');
+            input.id = field;
+            input.name = field;
+            if (isTextarea) {
+                input.rows = 4;
+                input.textContent = value;
+            } else {
+                input.type = 'text';
+                input.value = value;
+            }
+            input.className = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm';
+            
+            if (field === 'id') {
+                input.readOnly = !!shopId;
+            }
+
+            container.append(label, input);
+            fieldsContainer.appendChild(container);
+        });
+
+        if (shopId) {
+            modalTitle.textContent = '編輯商店';
+            editShopIdInput.value = shopId;
+        } else {
+            modalTitle.textContent = '新增商店';
+            editShopIdInput.value = '';
+        }
+        
+        modal.classList.add('active');
+    }
+
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const shopData = {};
+        formData.forEach((value, key) => {
+            shopData[key] = value;
+        });
+
+        // Basic Validation
+        if (isNaN(parseFloat(shopData.lat)) || isNaN(parseFloat(shopData.lng))) {
+            return alert('緯度和經度必須是數字！');
+        }
+        if (!shopData.id) {
+            return alert('商店 ID 為必填欄位！');
+        }
+        if (!editShopIdInput.value && allShopsData[shopData.id]) {
+            return alert('商店 ID 已存在，不可重複！');
+        }
+
+        const isEditing = !!document.getElementById('edit-shop-id').value;
+        const action = isEditing ? 'editShop' : 'addShop';
+
+        try {
+            await apiCall(action, { shopData }, true);
+            closeModal('shop-modal');
+            await loadAllData();
+            renderShops();
+            loadDashboardData();
+            alert('儲存成功！');
+        } catch (error) {
+            // apiCall handles error alert
+        }
+    }
+
     // ===== EVENT HANDLERS =====
 
     async function handleLogin(e) {
@@ -320,8 +432,6 @@
                 await loadAllData();
                 showPage('dashboard');
                 loadDashboardData();
-            } else {
-                throw new Error('Login failed, no token received.');
             }
         } catch (error) {
             loginError.classList.remove('hidden');
@@ -338,7 +448,6 @@
         document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
         document.querySelector(`.sidebar-link[data-page="${pageId}"]`).classList.add('active');
         
-        // Refresh data when switching to a page
         if (pageId === 'dashboard') loadDashboardData();
         if (pageId === 'shops') renderShops();
         if (pageId === 'subscribers') renderSubscribers();
@@ -395,6 +504,7 @@
     
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('login-form').addEventListener('submit', handleLogin);
+        document.getElementById('shop-form').addEventListener('submit', handleFormSubmit);
 
         document.querySelector('nav').addEventListener('click', (e) => {
             if (e.target.matches('.sidebar-link')) {
@@ -409,8 +519,7 @@
             if (!action || !id) return;
 
             if (action === 'edit-shop') {
-                // openShopModal(id); // This function needs to be refactored to be XSS-safe
-                alert("編輯功能正在安全重構中。");
+                openShopModal(id);
             } else if (action === 'delete-shop') {
                 if (confirm(`確定要刪除商店 "${allShopsData[id]['name_zh-TW']}" 嗎？`)) {
                     await apiCall('deleteShop', { shopId: id }, true);
@@ -434,10 +543,12 @@
             }
         });
         
-        document.getElementById('add-shop-button').addEventListener('click', () => alert("新增功能正在安全重構中。"));
+        document.getElementById('add-shop-button').addEventListener('click', () => openShopModal());
+        document.getElementById('cancel-modal-button').addEventListener('click', () => closeModal('shop-modal'));
         document.getElementById('batch-upload-button').addEventListener('click', () => document.getElementById('batch-upload-modal').classList.add('active'));
         document.getElementById('cancel-batch-upload-button').addEventListener('click', () => closeModal('batch-upload-modal'));
         document.getElementById('submit-batch-upload-button').addEventListener('click', handleBatchUpload);
+        
         document.getElementById('export-csv-button').addEventListener('click', () => {
             const csv = Papa.unparse(allSubscribersData);
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
