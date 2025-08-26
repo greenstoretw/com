@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>永續商店地圖 · 後台（含推薦信）</title>
+<style>
+:root { --green:#166534; --gray:#f6f7f9; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto; background:var(--gray); color:#111; }
+.wrap { max-width:1100px; margin:28px auto; padding:0 16px; }
+.card { background:#fff; border-radius:16px; box-shadow:0 12px 32px rgba(0,0,0,.08); overflow:hidden; }
+.card header { padding:12px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
+.brand { font-weight:700; color:var(--green); }
+.main { padding:16px; }
+.row { display:grid; gap:12px; }
+.row-2 { grid-template-columns:1fr 1fr; }
+input, textarea, select { width:100%; padding:10px; border:1px solid #ddd; border-radius:10px; font:inherit; }
+textarea { resize:vertical; min-height:120px; }
+.btn { appearance:none; border:0; border-radius:10px; padding:10px 14px; cursor:pointer; font:inherit; }
+.btn-primary { background:var(--green); color:#fff; }
+.btn-ghost { background:#eef2f7; color:#111; border:1px solid #e5e7eb; }
+.muted { color:#666; font-size:13px; }
+.tabs { display:flex; gap:6px; margin:8px 0 0; flex-wrap:wrap; }
+.tab { padding:8px 12px; border:1px solid #e5e7eb; background:#f9fafb; border-radius:10px; cursor:pointer; }
+.tab.active { background:var(--green); color:#fff; border-color:var(--green); }
+.pane { display:none; margin-top:12px; }
+.pane.active { display:block; }
+.list-row { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding:6px 0; font-size:14px; }
+.right { text-align:right; }
+.card-lite { background:#fff; border:1px solid #eee; border-radius:12px; padding:12px 14px; }
+@media (max-width:720px) { .row-2 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <header>
+      <div class="brand">永續商店地圖 · 後台（含推薦信）</div>
+      <div class="muted" id="status">未登入</div>
+    </header>
+    <div class="main">
+      <!-- Login -->
+      <div id="loginPane" class="row">
+        <input id="pwd" type="password" placeholder="管理員密碼（Script properties: ADMIN_PASSWORD）" />
+        <div class="right"><button id="loginBtn" class="btn btn-primary">登入</button></div>
+        <div id="loginMsg" class="muted"></div>
+      </div>
+
+      <!-- Tabs -->
+      <div id="tabs" style="display:none;">
+        <div class="tabs">
+          <button class="tab active" data-tab="dash">儀表板</button>
+          <button class="tab" data-tab="ann">公告</button>
+          <button class="tab" data-tab="pol">法律聲明</button>
+          <button class="tab" data-tab="subs">訂閱者</button>
+          <button class="tab" data-tab="send">推薦信</button>
+          <button class="tab" data-tab="shops">商店管理</button>
+        </div>
+
+        <!-- 儀表板 -->
+        <div id="pane-dash" class="pane active">
+          <div class="row row-2">
+            <div class="card-lite">商店總數：<b id="mShop">0</b></div>
+            <div class="card-lite">訂閱者總數：<b id="mSub">0</b></div>
+          </div>
+          <div class="muted" style="margin-top:8px">近30天每日新增：<span id="mTrend"></span></div>
+        </div>
+
+        <!-- 公告 -->
+        <div id="pane-ann" class="pane">
+          <div class="row">
+            <textarea id="annHtml" placeholder="<p>公告內容...</p>"></textarea>
+            <div class="right"><button id="saveAnn" class="btn btn-primary">儲存公告</button></div>
+            <div id="annMsg" class="muted"></div>
+          </div>
+        </div>
+
+        <!-- 法律聲明 -->
+        <div id="pane-pol" class="pane">
+          <div class="row">
+            <label class="muted">隱私權政策</label>
+            <textarea id="polPrivacy"></textarea>
+            <label class="muted">免責聲明</label>
+            <textarea id="polDisclaimer"></textarea>
+            <div class="right"><button id="savePol" class="btn btn-primary">儲存法律聲明</button></div>
+            <div id="polMsg" class="muted"></div>
+          </div>
+        </div>
+
+        <!-- 訂閱者 -->
+        <div id="pane-subs" class="pane">
+          <div class="row row-2">
+            <div>
+              <button id="loadSubs" class="btn btn-ghost">重新整理</button>
+              <div id="subsList" style="margin-top:8px;"></div>
+            </div>
+            <div>
+              <div class="muted">一鍵群發推薦信（寄給所有訂閱者）</div>
+              <div class="row" style="margin-top:8px;">
+                <select id="shopSelect"></select>
+                <div class="right"><button id="broadcast" class="btn btn-primary">送出</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 推薦信（單筆） -->
+        <div id="pane-send" class="pane">
+          <div class="row row-2">
+            <input id="recEmail" type="email" placeholder="收件者 Email" />
+            <select id="shopSelect2"></select>
+          </div>
+          <div class="right" style="margin-top:8px;"><button id="sendOne" class="btn btn-primary">寄出推薦信（單筆）</button></div>
+          <div id="sendMsg" class="muted"></div>
+        </div>
+
+        <!-- 商店管理 -->
+        <div id="pane-shops" class="pane">
+          <div class="row">
+            <div class="muted">欄位需對應 Google Sheet 的表頭（id、name_zh-TW、address_zh-TW、description_zh-TW …）。</div>
+            <div class="row row-2">
+              <input id="s_id" placeholder="id（必填，唯一）">
+              <input id="s_name" placeholder="name_zh-TW">
+            </div>
+            <div class="row row-2">
+              <input id="s_addr" placeholder="address_zh-TW">
+              <input id="s_desc" placeholder="description_zh-TW">
+            </div>
+            <div class="right">
+              <button id="shopSave" class="btn btn-primary">新增/更新</button>
+              <button id="shopDelete" class="btn btn-ghost">刪除此 id</button>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button id="shopReload" class="btn btn-ghost">重新整理列表</button>
+              <div id="shopList" class="muted"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbx4NR0LWj6j27lB_1-LxIDthj2ihaGyEQTQ1hqUNMyX5KC7a1bQtzpZwJYQVvq-6aILUA/exec';
+let TOKEN = '';
+function $(id){ return document.getElementById(id); }
+async function call(action, body){
+  const r = await fetch(API, { method:'POST', body: JSON.stringify(Object.assign({ action, token:TOKEN }, body||{})) });
+  return r.json();
+}
+function toast(el, ok, msg){ el.textContent = (ok?'✔ ':'✖ ') + msg; setTimeout(()=>el.textContent='', 2500); }
+
+$('loginBtn').onclick = async () => {
+  $('loginMsg').textContent = '登入中…';
+  try {
+    const res = await fetch(API, { method:'POST', body: JSON.stringify({ action:'adminLogin', password: $('pwd').value }) }).then(r=>r.json());
+    if (res.success){
+      TOKEN = res.token; $('status').textContent='已登入'; $('loginPane').style.display='none'; $('tabs').style.display='block'; loadAll();
+    } else $('loginMsg').textContent = '登入失敗：' + (res.error||'');
+  } catch(e){ $('loginMsg').textContent='登入錯誤：'+e.message; }
+};
+
+Array.from(document.querySelectorAll('.tab')).forEach(btn=>{
+  btn.onclick = () => {
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const t=btn.dataset.tab;
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+    $('pane-'+t).classList.add('active');
+  };
+});
+
+// 初始載入
+async function loadAll(){
+  try { const s = await call('getStats'); $('mShop').textContent=s.shopCount; $('mSub').textContent=s.subCount; $('mTrend').textContent=(s.trend||[]).map(x=>x.add).join(','); } catch(_){}
+  try { const a = await call('getAnnouncement'); $('annHtml').value = a.html||''; } catch(_){}
+  try { const p = await call('getPolicies'); $('polPrivacy').value=p.privacy||''; $('polDisclaimer').value=p.disclaimer||''; } catch(_){}
+  loadSubs(); loadShops();
+}
+
+// 公告/法律聲明
+$('saveAnn').onclick = async () => {
+  const res = await call('setAnnouncement', { html: $('annHtml').value });
+  toast($('annMsg'), res.success, res.success?'已儲存':'失敗：'+(res.error||''));
+};
+$('savePol').onclick = async () => {
+  const res = await call('setPolicies', { privacy:$('polPrivacy').value, disclaimer:$('polDisclaimer').value });
+  toast($('polMsg'), res.success, res.success?'已儲存':'失敗：'+(res.error||''));
+};
+
+// 訂閱者
+async function loadSubs(){
+  $('subsList').textContent='載入中…';
+  const res = await call('getSubscribers');
+  const arr = res.subscribers || [];
+  $('subsList').innerHTML = arr.length ? arr.map(s=>`<div class="list-row"><span>${s.email}</span><button data-mail="${s.email}" class="btn btn-ghost del">刪除</button></div>`).join('') : '<div class="muted">尚無訂閱者</div>';
+  document.querySelectorAll('.del').forEach(btn=>{
+    btn.onclick = async () => { await call('deleteSubscriber', { email: btn.dataset.mail }); btn.parentElement.remove(); };
+  });
+}
+$('loadSubs').onclick = loadSubs;
+
+// 商店
+async function loadShops(){
+  const r = await call('getShops'); const arr = r.shops || [];
+  $('shopList').innerHTML = arr.length ? arr.map(x=>`<div class="list-row"><span>${x.id}｜${x['name_zh-TW']||x.name_en||''}</span></div>`).join('') : '目前沒有資料';
+  const opts = `<option value="">（不指定商店）</option>` + arr.map(x=>`<option value="${x.id}">${x['name_zh-TW']||x.name_en||x.id}</option>`).join('');
+  $('shopSelect').innerHTML = opts; $('shopSelect2').innerHTML = opts;
+}
+$('shopSave').onclick = async () => {
+  const shop = { id:$('s_id').value.trim(), 'name_zh-TW':$('s_name').value.trim(), 'address_zh-TW':$('s_addr').value.trim(), 'description_zh-TW':$('s_desc').value.trim() };
+  const r = await call('upsertShop', { shop }); if (r.success){ loadShops(); alert('已儲存'); } else alert('失敗：'+(r.error||''));
+};
+$('shopDelete').onclick = async () => {
+  const id = $('s_id').value.trim(); if (!id) return alert('請先填 id');
+  const r = await call('deleteShop', { id }); if (r.success){ loadShops(); alert('已刪除'); } else alert('失敗：'+(r.error||''));
+};
+$('shopReload').onclick = loadShops;
+
+// 推薦信
+$('broadcast').onclick = async () => {
+  const res = await call('broadcastRecommendWithShop', { storeId: $('shopSelect').value || '' });
+  alert(res.success ? `已送出：${res.sent}/${res.total}（失敗 ${res.failed}）` : ('失敗：' + (res.error||'')));
+};
+$('sendOne').onclick = async () => {
+  const res = await call('recommendWithShop', { email: $('recEmail').value.trim(), storeId: $('shopSelect2').value || '' });
+  toast($('sendMsg'), res.success, res.success?'已發送':'失敗：'+(res.error||''));
+};
+</script>
+</body></html>
