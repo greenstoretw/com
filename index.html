@@ -260,29 +260,39 @@
             const fullScreenLoader = document.getElementById('full-screen-loader');
 
             // =================================================================
-            // API 呼叫函式
+            // API 呼叫函式 (MODIFIED to use URLSearchParams)
             // =================================================================
             async function apiCall(action, payload = {}, useAdminToken = true) {
                 showLoader(true);
-                const requestBody = { action, payload };
+                const form = new URLSearchParams();
+                form.set('action', action);
+
+                if (payload && Object.keys(payload).length > 0) {
+                    form.set('payload', JSON.stringify(payload));
+                }
+
                 if (useAdminToken) {
-                    if (!ADMIN_TOKEN) {
+                    const token = localStorage.getItem('adminToken');
+                    if (!token) {
                         alert('驗證失敗，請重新登入。');
                         showLoader(false);
                         showLogin();
                         return null;
                     }
-                    requestBody.token = ADMIN_TOKEN;
+                    form.set('token', token);
                 }
+                
                 try {
-                    const response = await fetch(GAS_URL, {
+                    // Use window.fetch to avoid potential interceptors
+                    const response = await window.fetch(GAS_URL, {
                         method: 'POST',
-                        mode: 'cors',
-                        body: JSON.stringify(requestBody),
-                        headers: { 'Content-Type': 'application/json' },
+                        body: form,
                     });
+                    
                     const result = await response.json();
-                    if (!result.success) throw new Error(result.data.message || 'API 請求失敗');
+                    if (!result.success) {
+                        throw new Error(result.data.message || 'API 回傳錯誤');
+                    }
                     return result.data;
                 } catch (error) {
                     console.error(`API Error (${action}):`, error);
@@ -332,14 +342,29 @@
                 const password = passwordInput.value;
                 if (!password) { loginError.textContent = '請輸入密碼。'; return; }
                 loginError.textContent = '';
-                const data = await apiCall('adminLogin', { password }, false);
-                if (data && data.token) {
-                    ADMIN_TOKEN = data.token;
-                    localStorage.setItem('adminToken', ADMIN_TOKEN);
-                    showMain();
-                    loadAllData();
-                } else {
-                    loginError.textContent = '密碼錯誤或發生問題。';
+                
+                // For login, we construct the form body manually
+                showLoader(true);
+                const form = new URLSearchParams();
+                form.set('action', 'adminLogin');
+                form.set('password', password); // Send password directly for login
+
+                try {
+                    const response = await window.fetch(GAS_URL, { method: 'POST', body: form });
+                    const data = await response.json();
+                    if (data && data.success && data.data.token) {
+                        ADMIN_TOKEN = data.data.token;
+                        localStorage.setItem('adminToken', ADMIN_TOKEN);
+                        showMain();
+                        loadAllData();
+                    } else {
+                        throw new Error(data.data.message || '登入失敗');
+                    }
+                } catch (error) {
+                     loginError.textContent = '密碼錯誤或發生問題。';
+                     console.error("Login failed:", error);
+                } finally {
+                    showLoader(false);
                 }
             }
 
@@ -507,7 +532,7 @@
 
             async function deleteShop(shopId) {
                 if (!confirm(`確定要刪除 ID 為 ${shopId} 的商店嗎？此操作無法復原。`)) return;
-                const result = await apiCall('deleteShop', { shopId });
+                const result = await apiCall('deleteShop', { payload: { shopId } });
                 if (result) { alert('商店已刪除！'); loadAllData(); }
             }
             
