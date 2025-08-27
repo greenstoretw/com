@@ -244,7 +244,7 @@
             // =================================================================
             // 全域變數 & 常數
             // =================================================================
-            const GAS_URL = 'https://script.google.com/macros/s/AKfycbyPgr9OV2vi0cXr6inFWpN13Htmlnn_KkDcaDEk7U7Vqp-W3kybSZpsQQBVY7vXf6sBpQ/exec'; // *** 已更新為您的最新 URL ***
+            const GAS_URL = 'https://script.google.com/macros/s/AKfycby1qIRNHQl6L-6reORexiVSxK3g19R-3uDRBr1IwwxPlVRpFf-OqQjLiHm1RcNjdPhfHw/exec'; // *** 已更新為您的最新 URL ***
             let ADMIN_TOKEN = null;
             let ALL_SHOPS = [];
             let SUBSCRIBER_CHART = null;
@@ -386,8 +386,11 @@
                     document.getElementById('total-subscribers').textContent = subscribersData.length;
                     renderSubscribersTable(subscribersData);
                 }
-                if (statsData) {
+                if (statsData && statsData.subscriberTrends) {
                     renderSubscriberChart(statsData.subscriberTrends);
+                } else {
+                    console.warn("Statistics data or subscriberTrends not available. Rendering empty chart.");
+                    renderSubscriberChart({ labels: [], data: [] });
                 }
                 if (announcementData !== null) {
                     document.getElementById('announcement-text').value = announcementData;
