@@ -1,28 +1,23 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>後台管理系統</title>
+    <title>永續商店地圖 - 管理後台</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; }
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         .modal { display: none; }
         .modal.active { display: flex; }
-        .sidebar-link { transition: all 0.2s ease-in-out; }
-        .sidebar-link.active { background-color: #10B981; color: white; }
-        .sidebar-link:not(.active):hover { background-color: #F3F4F6; }
-        .page-content { display: none; }
-        .page-content.active { display: block; }
         .loader {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #3498db;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin {
@@ -31,543 +26,678 @@
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 text-gray-800">
 
-    <!-- Login View -->
-    <div id="login-view" class="flex items-center justify-center h-screen bg-gray-200">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">後台登入</h2>
-            <form id="login-form">
-                <div class="mb-4">
-                    <label for="password" class="block text-gray-700 text-sm font-bold mb-2">管理員密碼：</label>
-                    <input type="password" id="password" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                </div>
-                <button id="login-button" type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline flex items-center justify-center">
-                    <span id="login-button-text">登入</span>
-                    <div id="login-loader" class="loader hidden"></div>
-                </button>
-                <p id="login-error" class="text-red-500 text-xs italic mt-4 text-center hidden">密碼錯誤或發生問題！</p>
-            </form>
+    <!-- 全螢幕載入動畫 -->
+    <div id="full-screen-loader" class="fixed inset-0 bg-white bg-opacity-75 z-50 flex-col items-center justify-center hidden">
+        <div class="loader"></div>
+        <p class="mt-4 text-lg font-semibold">處理中，請稍候...</p>
+    </div>
+
+    <!-- 登入 Modal -->
+    <div id="login-modal" class="modal active fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-40">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
+            <h2 class="text-2xl font-bold mb-6 text-center">管理員登入</h2>
+            <input type="password" id="password-input" class="w-full p-3 border rounded-md mb-4" placeholder="請輸入管理密碼">
+            <button id="login-button" class="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition-colors">登入</button>
+            <p id="login-error" class="text-red-500 mt-4 text-center"></p>
         </div>
     </div>
 
-    <!-- Main Dashboard View -->
-    <div id="dashboard-view" class="hidden">
-        <div class="flex h-screen bg-gray-100">
-            <!-- Sidebar -->
-            <div class="w-64 bg-white shadow-md">
-                <div class="p-6">
-                    <h1 class="text-2xl font-bold text-green-600">管理系統</h1>
-                </div>
-                <nav class="mt-4">
-                    <a href="#dashboard" class="sidebar-link block py-3 px-6 text-gray-700" data-page="dashboard">儀表板</a>
-                    <a href="#shops" class="sidebar-link block py-3 px-6 text-gray-700" data-page="shops">商店管理</a>
-                    <a href="#subscribers" class="sidebar-link block py-3 px-6 text-gray-700" data-page="subscribers">訂閱者管理</a>
-                    <a href="#announcements" class="sidebar-link block py-3 px-6 text-gray-700" data-page="announcements">公告管理</a>
+    <!-- 主容器 -->
+    <div id="main-container" class="hidden">
+        <header class="bg-white shadow-md">
+            <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">永續商店地圖 - 管理後台</h1>
+                <button id="logout-button" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">登出</button>
+            </div>
+        </header>
+
+        <main class="container mx-auto p-6">
+            <!-- Tab 按鈕 -->
+            <div class="mb-6 border-b border-gray-200">
+                <nav class="flex space-x-4" aria-label="Tabs">
+                    <button class="tab-btn active-tab" data-tab="dashboard">
+                        <i class="fas fa-tachometer-alt mr-2"></i>儀表板
+                    </button>
+                    <button class="tab-btn" data-tab="shops">
+                        <i class="fas fa-store mr-2"></i>商店管理
+                    </button>
+                    <button class="tab-btn" data-tab="subscribers">
+                        <i class="fas fa-users mr-2"></i>訂閱者管理
+                    </button>
+                    <button class="tab-btn" data-tab="announcement">
+                        <i class="fas fa-bullhorn mr-2"></i>公告管理
+                    </button>
+                    <button class="tab-btn" data-tab="policies">
+                        <i class="fas fa-file-contract mr-2"></i>法律聲明
+                    </button>
                 </nav>
             </div>
 
-            <!-- Main Content -->
-            <div class="flex-1 flex flex-col overflow-hidden">
-                <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-8">
-                    <div id="page-dashboard" class="page-content">
-                        <h2 class="text-3xl font-bold mb-6">儀表板</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            <div class="bg-white p-6 rounded-lg shadow-md">
-                                <h3 class="text-lg font-semibold text-gray-600">商店總數</h3>
-                                <p id="total-shops" class="text-4xl font-bold text-green-600">0</p>
-                            </div>
-                            <div class="bg-white p-6 rounded-lg shadow-md">
-                                <h3 class="text-lg font-semibold text-gray-600">訂閱者總數</h3>
-                                <p id="total-subscribers" class="text-4xl font-bold text-blue-600">0</p>
-                            </div>
-                            <div class="bg-white p-6 rounded-lg shadow-md">
-                                <h3 class="text-lg font-semibold text-gray-600">問題回報數 (待處理)</h3>
-                                <p id="issue-reports" class="text-4xl font-bold text-red-600">N/A</p>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <h3 class="text-xl font-semibold text-gray-700 mb-4">訂閱者增長趨勢 (過去30天)</h3>
-                            <canvas id="subscribers-chart"></canvas>
-                        </div>
+            <!-- Tab 內容 -->
+            <div id="dashboard" class="tab-content active">
+                <h2 class="text-3xl font-bold mb-6">儀表板</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-2">商店總數</h3>
+                        <p id="total-shops" class="text-4xl font-bold text-blue-600">0</p>
                     </div>
-                    <div id="page-shops" class="page-content">
-                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-3xl font-bold">商店列表</h2>
-                            <div>
-                                <button id="batch-upload-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">批次上傳</button>
-                                <button id="add-shop-button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">新增商店</button>
-                            </div>
-                        </div>
-                        <div class="bg-white shadow-md rounded-lg overflow-x-auto">
-                            <table class="min-w-full bg-white">
-                                <thead class="bg-gray-200">
-                                    <tr>
-                                        <th class="py-3 px-6 text-left">ID</th>
-                                        <th class="py-3 px-6 text-left">商店名稱 (中文)</th>
-                                        <th class="py-3 px-6 text-left">類別 (中文)</th>
-                                        <th class="py-3 px-6 text-left">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="shops-table-body"></tbody>
-                            </table>
-                        </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-2">訂閱者總數</h3>
+                        <p id="total-subscribers" class="text-4xl font-bold text-green-600">0</p>
                     </div>
-                    <div id="page-subscribers" class="page-content">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-3xl font-bold">訂閱者列表</h2>
-                            <button id="export-csv-button" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">匯出 CSV</button>
-                        </div>
-                        <div class="bg-white shadow-md rounded-lg">
-                             <ul id="subscribers-list" class="divide-y divide-gray-200"></ul>
-                        </div>
-                    </div>
-                    <div id="page-announcements" class="page-content">
-                        <h2 class="text-3xl font-bold mb-6">發布網站公告</h2>
-                        <div class="bg-white shadow-md rounded-lg p-6">
-                            <label for="announcement-content" class="block text-gray-700 text-sm font-bold mb-2">公告內容 (留白表示不顯示公告):</label>
-                            <textarea id="announcement-content" rows="10" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
-                            <button id="publish-announcement-button" class="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">發布公告</button>
-                        </div>
-                    </div>
-                </main>
+                </div>
             </div>
-        </div>
+
+            <div id="shops" class="tab-content">
+                <h2 class="text-3xl font-bold mb-6">商店管理</h2>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <button id="add-shop-btn" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">新增商店</button>
+                        <div>
+                            <label for="csv-upload" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 cursor-pointer">
+                                <i class="fas fa-upload mr-2"></i>批次匯入/更新 (CSV)
+                            </label>
+                            <input type="file" id="csv-upload" class="hidden" accept=".csv">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="p-3">ID</th>
+                                    <th class="p-3">名稱 (中)</th>
+                                    <th class="p-3">類型</th>
+                                    <th class="p-3">地址</th>
+                                    <th class="p-3">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shops-table-body">
+                                <!-- 商店資料將會動態插入這裡 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subscribers" class="tab-content">
+                <h2 class="text-3xl font-bold mb-6">訂閱者管理</h2>
+                 <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">訂閱者列表</h3>
+                        <button id="send-bulk-recommendation-btn" class="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600">
+                            <i class="fas fa-envelope-open-text mr-2"></i>群發商店推薦信
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="p-3">Email</th>
+                                    <th class="p-3">訂閱時間</th>
+                                    <th class="p-3">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subscribers-table-body">
+                                <!-- 訂閱者資料將會動態插入這裡 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="announcement" class="tab-content">
+                <h2 class="text-3xl font-bold mb-6">公告管理</h2>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <textarea id="announcement-text" class="w-full p-3 border rounded-md h-40 mb-4" placeholder="輸入網站首頁的公告內容..."></textarea>
+                    <button id="save-announcement-btn" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">儲存公告</button>
+                </div>
+            </div>
+
+            <div id="policies" class="tab-content">
+                <h2 class="text-3xl font-bold mb-6">法律聲明管理</h2>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="mb-6">
+                        <label for="privacy-policy-text" class="block text-lg font-semibold mb-2">隱私權政策 (privacy)</label>
+                        <textarea id="privacy-policy-text" class="w-full p-3 border rounded-md h-60"></textarea>
+                    </div>
+                    <div class="mb-6">
+                        <label for="disclaimer-text" class="block text-lg font-semibold mb-2">免責聲明 (disclaimer)</label>
+                        <textarea id="disclaimer-text" class="w-full p-3 border rounded-md h-60"></textarea>
+                    </div>
+                    <button id="save-policies-btn" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">儲存所有聲明</button>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- Modals -->
-    <div id="shop-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <form id="shop-form" class="p-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 id="modal-title" class="text-2xl font-bold">新增商店</h3>
-                    <button type="button" id="translate-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">自動翻譯成英文</button>
+    <!-- 商店編輯/新增 Modal -->
+    <div id="shop-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-40 overflow-y-auto p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl max-h-full overflow-y-auto">
+            <h2 id="shop-modal-title" class="text-2xl font-bold mb-6">新增商店</h2>
+            <form id="shop-form">
+                <input type="hidden" id="shop-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="shop-name_zh-TW" placeholder="名稱 (中)" class="p-2 border rounded" required>
+                    <input type="text" id="shop-name_en" placeholder="名稱 (英)" class="p-2 border rounded">
+                    <input type="text" id="shop-type_zh-TW" placeholder="類型 (中)" class="p-2 border rounded">
+                    <input type="text" id="shop-type_en" placeholder="類型 (英)" class="p-2 border rounded">
+                    <input type="text" id="shop-address_zh-TW" placeholder="地址 (中)" class="p-2 border rounded col-span-2">
+                    <input type="text" id="shop-address_en" placeholder="地址 (英)" class="p-2 border rounded col-span-2">
+                    <input type="text" id="shop-hours_zh-TW" placeholder="營業時間 (中)" class="p-2 border rounded">
+                    <input type="text" id="shop-hours_en" placeholder="營業時間 (英)" class="p-2 border rounded">
+                    <input type="text" id="shop-phone" placeholder="電話" class="p-2 border rounded">
+                    <input type="email" id="shop-email" placeholder="Email" class="p-2 border rounded">
+                    <input type="url" id="shop-website" placeholder="網站" class="p-2 border rounded col-span-2">
+                    <textarea id="shop-description_zh-TW" placeholder="簡短描述 (中)" class="p-2 border rounded col-span-2 h-20"></textarea>
+                    <textarea id="shop-description_en" placeholder="簡短描述 (英)" class="p-2 border rounded col-span-2 h-20"></textarea>
+                    <textarea id="shop-longDescription_zh-TW" placeholder="詳細描述 (中)" class="p-2 border rounded col-span-2 h-32"></textarea>
+                    <textarea id="shop-longDescription_en" placeholder="詳細描述 (英)" class="p-2 border rounded col-span-2 h-32"></textarea>
+                    <textarea id="shop-sustainability_zh-TW" placeholder="永續特色 (中)" class="p-2 border rounded col-span-2 h-24"></textarea>
+                    <textarea id="shop-sustainability_en" placeholder="永續特色 (英)" class="p-2 border rounded col-span-2 h-24"></textarea>
+                    <input type="text" id="shop-tags_zh-TW" placeholder="標籤 (中，用逗號分隔)" class="p-2 border rounded">
+                    <input type="text" id="shop-tags_en" placeholder="標籤 (英，用逗號分隔)" class="p-2 border rounded">
+                    <input type="number" step="any" id="shop-lat" placeholder="緯度" class="p-2 border rounded" required>
+                    <input type="number" step="any" id="shop-lng" placeholder="經度" class="p-2 border rounded" required>
                 </div>
-                <input type="hidden" id="edit-shop-id">
-                <div id="shop-form-fields" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-                <div class="mt-8 flex justify-end">
-                    <button type="button" id="cancel-modal-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">取消</button>
-                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">儲存</button>
+                <div class="mt-6 flex justify-end space-x-4">
+                    <button type="button" id="cancel-shop-btn" class="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">取消</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">儲存</button>
                 </div>
             </form>
         </div>
     </div>
-    <div id="batch-upload-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
-            <div class="p-8">
-                <h3 class="text-2xl font-bold mb-4">批次上傳商店</h3>
-                <p class="mb-4 text-gray-600">請上傳 CSV 檔案。檔案格式需包含與新增商店欄位完全相同的表頭。系統會根據 ID 自動判斷要新增還是更新商店。</p>
-                <input type="file" id="batch-file-input" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"/>
-                <div class="mt-6 flex justify-end items-center">
-                    <div id="batch-loader" class="loader mr-4 hidden"></div>
-                    <button type="button" id="cancel-batch-upload-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">取消</button>
-                    <button type="button" id="submit-batch-upload-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">上傳</button>
-                </div>
+
+    <!-- 推薦信 Modal -->
+    <div id="recommendation-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-40">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6">選擇要推薦的商店</h2>
+            <select id="recommendation-shop-select" class="w-full p-3 border rounded-md mb-4">
+                <!-- 商店選項將動態載入 -->
+            </select>
+            <div class="flex justify-end space-x-4">
+                <button type="button" id="cancel-recommendation-btn" class="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">取消</button>
+                <button type="button" id="confirm-recommendation-btn" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">確認發送</button>
             </div>
         </div>
     </div>
 
+
     <script>
-    // ===== CONFIGURATION & STATE =====
-    const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4NR0LWj6j27lB_1-LxIDthj2ihaGyEQTQ1hqUNMyX5KC7a1bQtzpZwJYQVvq-6aILUA/exec';
-    let adminAuthToken = null; // [SECURITY] Used for authenticating admin actions
-    let allShopsData = {};
-    let allSubscribersData = [];
-    let subscribersChartInstance = null;
-    const SHOP_FIELDS = ['id', 'name_zh-TW', 'name_en', 'type_zh-TW', 'type_en', 'address_zh-TW', 'address_en', 'hours_zh-TW', 'hours_en', 'phone', 'email', 'website', 'description_zh-TW', 'description_en', 'longDescription_zh-TW', 'longDescription_en', 'sustainability_zh-TW', 'sustainability_en', 'tags_zh-TW', 'tags_en', 'lat', 'lng'];
-    const FIELD_LABELS = {'id': '商店 ID (請用英文，不可重複)', 'name_zh-TW': '商店名稱 (中文)', 'name_en': '商店名稱 (英文)', 'type_zh-TW': '類別 (中文)', 'type_en': '類別 (英文)', 'address_zh-TW': '地址 (中文)', 'address_en': '地址 (英文)', 'hours_zh-TW': '營業時間 (中文)', 'hours_en': '營業時間 (英文)', 'phone': '電話', 'email': '電子郵件', 'website': '網站', 'description_zh-TW': '簡短描述 (中文)', 'description_en': '簡短描述 (英文)', 'longDescription_zh-TW': '詳細介紹 (中文)', 'longDescription_en': '詳細介紹 (英文)', 'sustainability_zh-TW': '永續理念 (中文)', 'sustainability_en': '永續理念 (英文)', 'tags_zh-TW': '標籤 (中文，用逗號分隔)', 'tags_en': '標籤 (英文，用逗號分隔)', 'lat': '緯度 (Latitude)', 'lng': '經度 (Longitude)'};
+        document.addEventListener('DOMContentLoaded', () => {
+            // =================================================================
+            // 全域變數 & 常數
+            // =================================================================
+            const GAS_URL = 'https://script.google.com/macros/s/AKfycbx4NR0LWj6j27lB_1-LxIDthj2ihaGyEQTQ1hqUNMyX5KC7a1bQtzpZwJYQVvq-6aILUA/exec'; // 已更新為您的 Apps Script URL
+            let ADMIN_TOKEN = null;
+            let ALL_SHOPS = [];
+            let ALL_SUBSCRIBERS = [];
 
-    // ===== SECURITY & API CALLS =====
-    
-    async function apiCall(action, payload = {}, isAdminAction = false) {
-        if (isAdminAction && !adminAuthToken) {
-            alert('驗證權杖遺失，請重新登入。');
-            window.location.reload();
-            throw new Error('Authentication token is missing.');
-        }
+            // =================================================================
+            // DOM 元素
+            // =================================================================
+            const loginModal = document.getElementById('login-modal');
+            const passwordInput = document.getElementById('password-input');
+            const loginButton = document.getElementById('login-button');
+            const loginError = document.getElementById('login-error');
+            const mainContainer = document.getElementById('main-container');
+            const logoutButton = document.getElementById('logout-button');
+            const fullScreenLoader = document.getElementById('full-screen-loader');
+            const shopModal = document.getElementById('shop-modal');
+            const recommendationModal = document.getElementById('recommendation-modal');
 
-        const body = { action, ...payload };
-        if (isAdminAction) {
-            body.authToken = adminAuthToken;
-        }
+            // =================================================================
+            // API 呼叫函式
+            // =================================================================
+            async function apiCall(action, payload = {}, useAdminToken = true) {
+                showLoader(true);
+                const requestBody = { action, payload };
+                if (useAdminToken) {
+                    if (!ADMIN_TOKEN) {
+                        alert('驗證失敗，請重新登入。');
+                        showLoader(false);
+                        showLogin();
+                        return;
+                    }
+                    requestBody.token = ADMIN_TOKEN;
+                }
 
-        try {
-            const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(body)
-            });
-            if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
-            
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error || 'API returned an error.');
-            
-            return result;
-        } catch (error) {
-            console.error(`API call failed for action "${action}":`, error);
-            alert(`操作失敗：${error.message}`);
-            throw error;
-        }
-    }
-
-    // ===== DOM MANIPULATION & RENDERING (XSS SAFE) =====
-
-    function renderShops() {
-        const tableBody = document.getElementById('shops-table-body');
-        tableBody.innerHTML = '';
-        Object.values(allShopsData).forEach(shop => {
-            const row = tableBody.insertRow();
-            row.className = 'border-b';
-            
-            const cellId = row.insertCell();
-            cellId.className = 'py-3 px-6';
-            cellId.textContent = shop.id;
-
-            const cellName = row.insertCell();
-            cellName.className = 'py-3 px-6';
-            cellName.textContent = shop['name_zh-TW'];
-
-            const cellType = row.insertCell();
-            cellType.className = 'py-3 px-6';
-            cellType.textContent = shop['type_zh-TW'];
-
-            const cellActions = row.insertCell();
-            cellActions.className = 'py-3 px-6';
-            
-            const editButton = document.createElement('button');
-            editButton.className = 'text-blue-500 hover:underline mr-4';
-            editButton.textContent = '編輯';
-            editButton.dataset.id = shop.id;
-            editButton.dataset.action = 'edit-shop';
-
-            const deleteButton = document.createElement('button');
-            deleteButton.className = 'text-red-500 hover:underline';
-            deleteButton.textContent = '刪除';
-            deleteButton.dataset.id = shop.id;
-            deleteButton.dataset.action = 'delete-shop';
-
-            cellActions.append(editButton, deleteButton);
-        });
-    }
-
-    function renderSubscribers() {
-        const list = document.getElementById('subscribers-list');
-        list.innerHTML = '';
-        allSubscribersData.forEach(subscriber => {
-            const li = document.createElement('li');
-            li.className = 'p-4 flex justify-between items-center';
-
-            const emailSpan = document.createElement('span');
-            emailSpan.textContent = subscriber.email;
-
-            const deleteButton = document.createElement('button');
-            deleteButton.className = 'text-red-500 hover:underline';
-            deleteButton.textContent = '刪除';
-            deleteButton.dataset.email = subscriber.email;
-            deleteButton.dataset.action = 'delete-subscriber';
-
-            li.append(emailSpan, deleteButton);
-            list.appendChild(li);
-        });
-    }
-    
-    async function loadDashboardData() {
-        document.getElementById('total-shops').textContent = Object.keys(allShopsData).length;
-        document.getElementById('total-subscribers').textContent = allSubscribersData.length;
-        const dailyCounts = {};
-        for (let i = 0; i < 30; i++) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            dailyCounts[d.toISOString().split('T')[0]] = 0;
-        }
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        allSubscribersData.forEach(sub => {
-            if (sub.timestamp && new Date(sub.timestamp) >= thirtyDaysAgo) {
-                const key = new Date(sub.timestamp).toISOString().split('T')[0];
-                if (dailyCounts[key] !== undefined) dailyCounts[key]++;
-            }
-        });
-        const sortedCounts = Object.entries(dailyCounts).sort((a, b) => a[0].localeCompare(b[0]));
-        const labels = sortedCounts.map(entry => {
-            const [, month, day] = entry[0].split('-');
-            return `${parseInt(month, 10)}/${parseInt(day, 10)}`;
-        });
-        const data = sortedCounts.map(entry => entry[1]);
-        const ctx = document.getElementById('subscribers-chart').getContext('2d');
-        if (subscribersChartInstance) subscribersChartInstance.destroy();
-        subscribersChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{ label: '新增訂閱人數', data, borderColor: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4 }]
-            },
-            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-        });
-    }
-
-    async function loadAllData() {
-        const [shopsResult, subscribersResult] = await Promise.all([
-            apiCall('getShops', {}, true),
-            apiCall('getEmails', {}, true)
-        ]);
-        if (shopsResult) allShopsData = shopsResult.shops;
-        if (subscribersResult) allSubscribersData = subscribersResult.subscribers;
-    }
-
-    // ===== MODAL & FORM HANDLING =====
-
-    function openShopModal(shopId = null) {
-        const modal = document.getElementById('shop-modal');
-        const form = document.getElementById('shop-form');
-        const fieldsContainer = document.getElementById('shop-form-fields');
-        const modalTitle = document.getElementById('modal-title');
-        const editShopIdInput = document.getElementById('edit-shop-id');
-        
-        form.reset();
-        fieldsContainer.innerHTML = '';
-        
-        const shopData = shopId ? allShopsData[shopId] : {};
-
-        SHOP_FIELDS.forEach(field => {
-            const isTextarea = field.toLowerCase().includes('description') || field.toLowerCase().includes('sustainability');
-            const value = shopData[field] || '';
-            const labelText = FIELD_LABELS[field] || field;
-
-            const container = document.createElement('div');
-            if (isTextarea) container.className = 'md:col-span-2';
-
-            const label = document.createElement('label');
-            label.htmlFor = field;
-            label.className = 'block text-sm font-medium text-gray-700';
-            label.textContent = labelText;
-
-            const input = document.createElement(isTextarea ? 'textarea' : 'input');
-            input.id = field;
-            input.name = field;
-            if (isTextarea) {
-                input.rows = 4;
-                input.textContent = value;
-            } else {
-                input.type = 'text';
-                input.value = value;
-            }
-            input.className = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm';
-            
-            if (field === 'id') {
-                input.readOnly = !!shopId;
+                try {
+                    const response = await fetch(GAS_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(requestBody),
+                        headers: { 'Content-Type': 'application/json' },
+                        redirect: 'follow'
+                    });
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.data.message || 'API 請求失敗');
+                    }
+                    return result.data;
+                } catch (error) {
+                    console.error(`API Error (${action}):`, error);
+                    alert(`操作失敗：${error.message}`);
+                    return null;
+                } finally {
+                    showLoader(false);
+                }
             }
 
-            container.append(label, input);
-            fieldsContainer.appendChild(container);
-        });
+            // =================================================================
+            // 初始設定 & 驗證
+            // =================================================================
+            function init() {
+                ADMIN_TOKEN = localStorage.getItem('adminToken');
+                if (ADMIN_TOKEN) {
+                    // 可以在這裡加一個 token 驗證的 API call，例如取得儀表板資料
+                    // 如果成功就顯示主畫面，失敗就顯示登入畫面
+                    showMain();
+                    loadAllData();
+                } else {
+                    showLogin();
+                }
 
-        if (shopId) {
-            modalTitle.textContent = '編輯商店';
-            editShopIdInput.value = shopId;
-        } else {
-            modalTitle.textContent = '新增商店';
-            editShopIdInput.value = '';
-        }
-        
-        modal.classList.add('active');
-    }
-
-    async function handleFormSubmit(e) {
-        e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
-        const shopData = {};
-        formData.forEach((value, key) => {
-            shopData[key] = value;
-        });
-
-        // Basic Validation
-        if (isNaN(parseFloat(shopData.lat)) || isNaN(parseFloat(shopData.lng))) {
-            return alert('緯度和經度必須是數字！');
-        }
-        if (!shopData.id) {
-            return alert('商店 ID 為必填欄位！');
-        }
-        if (!editShopIdInput.value && allShopsData[shopData.id]) {
-            return alert('商店 ID 已存在，不可重複！');
-        }
-
-        const isEditing = !!document.getElementById('edit-shop-id').value;
-        const action = isEditing ? 'editShop' : 'addShop';
-
-        try {
-            await apiCall(action, { shopData }, true);
-            closeModal('shop-modal');
-            await loadAllData();
-            renderShops();
-            loadDashboardData();
-            alert('儲存成功！');
-        } catch (error) {
-            // apiCall handles error alert
-        }
-    }
-
-    // ===== EVENT HANDLERS =====
-
-    async function handleLogin(e) {
-        e.preventDefault();
-        const password = document.getElementById('password').value;
-        const loginButton = document.getElementById('login-button');
-        const loginButtonText = document.getElementById('login-button-text');
-        const loginLoader = document.getElementById('login-loader');
-        const loginError = document.getElementById('login-error');
-
-        loginButton.disabled = true;
-        loginButtonText.classList.add('hidden');
-        loginLoader.classList.remove('hidden');
-        loginError.classList.add('hidden');
-
-        try {
-            const result = await apiCall('adminLogin', { password });
-            if (result.token) {
-                adminAuthToken = result.token;
-                document.getElementById('login-view').style.display = 'none';
-                document.getElementById('dashboard-view').style.display = 'block';
-                await loadAllData();
-                showPage('dashboard');
-                loadDashboardData();
+                setupEventListeners();
             }
-        } catch (error) {
-            loginError.classList.remove('hidden');
-        } finally {
-            loginButton.disabled = false;
-            loginButtonText.classList.remove('hidden');
-            loginLoader.classList.add('hidden');
-        }
-    }
 
-    function showPage(pageId) {
-        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-        document.getElementById(`page-${pageId}`).classList.add('active');
-        document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-        document.querySelector(`.sidebar-link[data-page="${pageId}"]`).classList.add('active');
-        
-        if (pageId === 'dashboard') loadDashboardData();
-        if (pageId === 'shops') renderShops();
-        if (pageId === 'subscribers') renderSubscribers();
-    }
-    
-    async function handleBatchUpload() {
-        const fileInput = document.getElementById('batch-file-input');
-        const loader = document.getElementById('batch-loader');
-        const submitButton = document.getElementById('submit-batch-upload-button');
+            function setupEventListeners() {
+                loginButton.addEventListener('click', handleLogin);
+                passwordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') handleLogin();
+                });
+                logoutButton.addEventListener('click', handleLogout);
 
-        if (fileInput.files.length === 0) return alert('請選擇一個 CSV 檔案！');
-        
-        loader.classList.remove('hidden');
-        submitButton.disabled = true;
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+                });
 
-        Papa.parse(fileInput.files[0], {
-            header: true,
-            skipEmptyLines: true,
-            complete: async (results) => {
-                const missingHeaders = SHOP_FIELDS.filter(h => !results.meta.fields.includes(h));
-                if (missingHeaders.length > 0) {
-                    alert(`檔案格式錯誤！缺少欄位：\n${missingHeaders.join(', ')}`);
-                    loader.classList.add('hidden');
-                    submitButton.disabled = false;
+                // 商店管理
+                document.getElementById('add-shop-btn').addEventListener('click', openShopModalForAdd);
+                document.getElementById('shop-form').addEventListener('submit', handleSaveShop);
+                document.getElementById('cancel-shop-btn').addEventListener('click', () => toggleModal('shop-modal', false));
+                document.getElementById('csv-upload').addEventListener('change', handleCsvUpload);
+
+                // 訂閱者管理
+                document.getElementById('send-bulk-recommendation-btn').addEventListener('click', openRecommendationModal);
+                document.getElementById('cancel-recommendation-btn').addEventListener('click', () => toggleModal('recommendation-modal', false));
+                document.getElementById('confirm-recommendation-btn').addEventListener('click', handleSendBulkRecommendation);
+                
+                // 公告 & 政策
+                document.getElementById('save-announcement-btn').addEventListener('click', saveAnnouncement);
+                document.getElementById('save-policies-btn').addEventListener('click', savePolicies);
+            }
+
+            // =================================================================
+            // 登入 & 登出邏輯
+            // =================================================================
+            async function handleLogin() {
+                const password = passwordInput.value;
+                if (!password) {
+                    loginError.textContent = '請輸入密碼。';
                     return;
                 }
-                try {
-                    const result = await apiCall('batchAddOrUpdateShops', { shopsData: results.data }, true);
-                    closeModal('batch-upload-modal');
-                    await loadAllData();
-                    renderShops();
-                    loadDashboardData();
-                    alert(`批次處理完成！\n新增: ${result.added} 筆\n更新: ${result.updated} 筆`);
-                } catch (error) {
-                    // apiCall handles alert
-                } finally {
-                    loader.classList.add('hidden');
-                    submitButton.disabled = false;
-                }
-            },
-            error: (err) => {
-                alert('解析 CSV 檔案時發生錯誤，請檢查檔案格式。');
-                loader.classList.add('hidden');
-                submitButton.disabled = false;
-            }
-        });
-    }
-
-    function closeModal(modalId) {
-        document.getElementById(modalId).classList.remove('active');
-    }
-
-    // ===== INITIALIZATION & EVENT LISTENERS =====
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('login-form').addEventListener('submit', handleLogin);
-        document.getElementById('shop-form').addEventListener('submit', handleFormSubmit);
-
-        document.querySelector('nav').addEventListener('click', (e) => {
-            if (e.target.matches('.sidebar-link')) {
-                e.preventDefault();
-                showPage(e.target.dataset.page);
-            }
-        });
-        
-        document.getElementById('shops-table-body').addEventListener('click', async e => {
-            const action = e.target.dataset.action;
-            const id = e.target.dataset.id;
-            if (!action || !id) return;
-
-            if (action === 'edit-shop') {
-                openShopModal(id);
-            } else if (action === 'delete-shop') {
-                if (confirm(`確定要刪除商店 "${allShopsData[id]['name_zh-TW']}" 嗎？`)) {
-                    await apiCall('deleteShop', { shopId: id }, true);
-                    await loadAllData();
-                    renderShops();
-                    loadDashboardData();
+                loginError.textContent = '';
+                
+                const data = await apiCall('adminLogin', { password }, false);
+                if (data && data.token) {
+                    ADMIN_TOKEN = data.token;
+                    localStorage.setItem('adminToken', ADMIN_TOKEN);
+                    showMain();
+                    loadAllData();
+                } else {
+                    loginError.textContent = '密碼錯誤或發生問題。';
                 }
             }
-        });
 
-        document.getElementById('subscribers-list').addEventListener('click', async e => {
-            const action = e.target.dataset.action;
-            const email = e.target.dataset.email;
-            if (action === 'delete-subscriber' && email) {
-                if (confirm(`確定要刪除訂閱者 "${email}" 嗎？`)) {
-                    await apiCall('deleteEmail', { email }, true);
-                    await loadAllData();
-                    renderSubscribers();
-                    loadDashboardData();
+            function handleLogout() {
+                ADMIN_TOKEN = null;
+                localStorage.removeItem('adminToken');
+                showLogin();
+            }
+
+            // =================================================================
+            // UI 控制函式
+            // =================================================================
+            function showLogin() {
+                loginModal.classList.add('active');
+                mainContainer.classList.add('hidden');
+            }
+
+            function showMain() {
+                loginModal.classList.remove('active');
+                mainContainer.classList.remove('hidden');
+            }
+
+            function showLoader(show) {
+                fullScreenLoader.style.display = show ? 'flex' : 'none';
+            }
+            
+            function toggleModal(modalId, show) {
+                document.getElementById(modalId).style.display = show ? 'flex' : 'none';
+            }
+
+            function switchTab(tabId) {
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active-tab');
+                });
+
+                document.getElementById(tabId).classList.add('active');
+                document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active-tab');
+            }
+            
+            // CSS for active tab
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .tab-btn {
+                    padding: 8px 16px;
+                    cursor: pointer;
+                    border-bottom: 2px solid transparent;
+                    transition: all 0.3s ease;
+                    color: #6B7280; /* gray-500 */
+                }
+                .tab-btn:hover {
+                    color: #1F2937; /* gray-800 */
+                }
+                .tab-btn.active-tab {
+                    color: #3B82F6; /* blue-500 */
+                    border-color: #3B82F6; /* blue-500 */
+                    font-weight: 600;
+                }
+            `;
+            document.head.appendChild(style);
+
+            // =================================================================
+            // 資料載入 & 渲染
+            // =================================================================
+            async function loadAllData() {
+                await loadDashboardData();
+                await loadShops();
+                await loadSubscribers();
+                await loadAnnouncement();
+                await loadPolicies();
+            }
+
+            async function loadDashboardData() {
+                const shopsData = await apiCall('getShopsData');
+                const subscribersData = await apiCall('getSubscribersData');
+                if (shopsData) {
+                    document.getElementById('total-shops').textContent = shopsData.length;
+                    ALL_SHOPS = shopsData;
+                }
+                if (subscribersData) {
+                    document.getElementById('total-subscribers').textContent = subscribersData.length;
+                    ALL_SUBSCRIBERS = subscribersData;
                 }
             }
+
+            async function loadShops() {
+                const data = await apiCall('getShopsData');
+                if (!data) return;
+                ALL_SHOPS = data;
+                renderShopsTable(data);
+                document.getElementById('total-shops').textContent = data.length;
+            }
+
+            function renderShopsTable(shops) {
+                const tbody = document.getElementById('shops-table-body');
+                tbody.innerHTML = '';
+                if (shops.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center">沒有商店資料。</td></tr>';
+                    return;
+                }
+                shops.forEach(shop => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b hover:bg-gray-50';
+                    tr.innerHTML = `
+                        <td class="p-3">${shop.id}</td>
+                        <td class="p-3">${shop['name_zh-TW']}</td>
+                        <td class="p-3">${shop['type_zh-TW']}</td>
+                        <td class="p-3">${shop['address_zh-TW']}</td>
+                        <td class="p-3">
+                            <button class="text-blue-600 hover:text-blue-800 mr-2" onclick="window.app.editShop('${shop.id}')"><i class="fas fa-edit"></i></button>
+                            <button class="text-red-600 hover:text-red-800" onclick="window.app.deleteShop('${shop.id}')"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            async function loadSubscribers() {
+                const data = await apiCall('getSubscribersData');
+                if (!data) return;
+                ALL_SUBSCRIBERS = data;
+                renderSubscribersTable(data);
+                document.getElementById('total-subscribers').textContent = data.length;
+            }
+
+            function renderSubscribersTable(subscribers) {
+                const tbody = document.getElementById('subscribers-table-body');
+                tbody.innerHTML = '';
+                if (subscribers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-center">沒有訂閱者資料。</td></tr>';
+                    return;
+                }
+                subscribers.forEach(sub => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b hover:bg-gray-50';
+                    tr.innerHTML = `
+                        <td class="p-3">${sub.email}</td>
+                        <td class="p-3">${new Date(sub.timestamp).toLocaleString()}</td>
+                        <td class="p-3">
+                            <button class="text-red-600 hover:text-red-800" onclick="window.app.deleteSubscriber('${sub.email}')"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            async function loadAnnouncement() {
+                const data = await apiCall('getAnnouncementData');
+                if (data !== null) {
+                    document.getElementById('announcement-text').value = data;
+                }
+            }
+
+            async function loadPolicies() {
+                const data = await apiCall('getPoliciesData');
+                if (data) {
+                    document.getElementById('privacy-policy-text').value = data.privacy?.value || '';
+                    document.getElementById('disclaimer-text').value = data.disclaimer?.value || '';
+                }
+            }
+
+            // =================================================================
+            // 商店管理邏輯
+            // =================================================================
+            function openShopModalForAdd() {
+                document.getElementById('shop-form').reset();
+                document.getElementById('shop-id').value = '';
+                document.getElementById('shop-modal-title').textContent = '新增商店';
+                toggleModal('shop-modal', true);
+            }
+
+            function openShopModalForEdit(shopId) {
+                const shop = ALL_SHOPS.find(s => String(s.id) === String(shopId));
+                if (!shop) {
+                    alert('找不到指定的商店！');
+                    return;
+                }
+                document.getElementById('shop-modal-title').textContent = '編輯商店';
+                
+                // 填充表單
+                Object.keys(shop).forEach(key => {
+                    const input = document.getElementById(`shop-${key}`);
+                    if (input) {
+                        input.value = shop[key];
+                    }
+                });
+                // 處理 hidden id
+                document.getElementById('shop-id').value = shop.id;
+
+                toggleModal('shop-modal', true);
+            }
+
+            async function handleSaveShop(event) {
+                event.preventDefault();
+                const shopId = document.getElementById('shop-id').value;
+                const shopData = {};
+                const form = document.getElementById('shop-form');
+                const inputs = form.querySelectorAll('input, textarea');
+                inputs.forEach(input => {
+                    if (input.id.startsWith('shop-')) {
+                        const key = input.id.replace('shop-', '');
+                        shopData[key] = input.value;
+                    }
+                });
+                
+                // 如果是新增，但沒有 id，則產生一個
+                if (!shopData.id) {
+                    shopData.id = `shop-${Date.now()}`;
+                }
+
+                const action = shopId ? 'editShop' : 'addShop';
+                const result = await apiCall(action, shopData);
+                if (result) {
+                    alert('商店資料已儲存！');
+                    toggleModal('shop-modal', false);
+                    await loadShops();
+                }
+            }
+
+            async function deleteShop(shopId) {
+                if (!confirm(`確定要刪除 ID 為 ${shopId} 的商店嗎？`)) return;
+                const result = await apiCall('deleteShop', { shopId });
+                if (result) {
+                    alert('商店已刪除！');
+                    await loadShops();
+                }
+            }
+            
+            function handleCsvUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const text = e.target.result;
+                    const shops = parseCsv(text);
+                    if (shops.length > 0) {
+                        if (confirm(`從 CSV 讀取到 ${shops.length} 筆商店資料。確定要批次新增/更新嗎？`)) {
+                            const result = await apiCall('batchAddOrUpdateShops', { shops });
+                            if (result) {
+                                alert(`操作完成！新增 ${result.added} 筆，更新 ${result.updated} 筆。`);
+                                await loadShops();
+                            }
+                        }
+                    } else {
+                        alert('無法從 CSV 檔案中解析出商店資料。請檢查格式是否正確。');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            function parseCsv(csvText) {
+                const lines = csvText.split(/\r?\n/);
+                if (lines.length < 2) return [];
+                const headers = lines[0].split(',').map(h => h.trim());
+                const shops = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i]) continue;
+                    const values = lines[i].split(','); // 簡易版 CSV 解析，不處理引號內的逗號
+                    const shop = {};
+                    headers.forEach((header, index) => {
+                        shop[header] = values[index] ? values[index].trim() : '';
+                    });
+                    if (shop.id) { // 必須要有 id
+                        shops.push(shop);
+                    }
+                }
+                return shops;
+            }
+
+            // =================================================================
+            // 訂閱者管理邏輯
+            // =================================================================
+            async function deleteSubscriber(email) {
+                if (!confirm(`確定要刪除訂閱者 ${email} 嗎？`)) return;
+                const result = await apiCall('removeSubscriber', { email });
+                if (result) {
+                    alert('訂閱者已刪除！');
+                    await loadSubscribers();
+                }
+            }
+
+            function openRecommendationModal() {
+                const select = document.getElementById('recommendation-shop-select');
+                select.innerHTML = '<option value="">-- 請選擇一家商店 --</option>';
+                ALL_SHOPS.forEach(shop => {
+                    const option = document.createElement('option');
+                    option.value = shop.id;
+                    option.textContent = `${shop['name_zh-TW']} (${shop.id})`;
+                    select.appendChild(option);
+                });
+                toggleModal('recommendation-modal', true);
+            }
+
+            async function handleSendBulkRecommendation() {
+                const shopId = document.getElementById('recommendation-shop-select').value;
+                if (!shopId) {
+                    alert('請選擇要推薦的商店。');
+                    return;
+                }
+                
+                if (!confirm(`確定要將商店 (ID: ${shopId}) 的推薦信寄給所有 ${ALL_SUBSCRIBERS.length} 位訂閱者嗎？這個操作可能需要一些時間。`)) return;
+
+                const result = await apiCall('sendBulkRecommendations', { shopId });
+                if (result) {
+                    alert(result.message || '群發郵件任務已啟動。');
+                    toggleModal('recommendation-modal', false);
+                }
+            }
+
+            // =================================================================
+            // 公告 & 政策邏輯
+            // =================================================================
+            async function saveAnnouncement() {
+                const content = document.getElementById('announcement-text').value;
+                const result = await apiCall('setAnnouncement', { content });
+                if (result) {
+                    alert('公告已更新！');
+                }
+            }
+
+            async function savePolicies() {
+                const privacyValue = document.getElementById('privacy-policy-text').value;
+                const disclaimerValue = document.getElementById('disclaimer-text').value;
+
+                const result1 = await apiCall('setPolicy', { key: 'privacy', value: privacyValue });
+                const result2 = await apiCall('setPolicy', { key: 'disclaimer', value: disclaimerValue });
+
+                if (result1 && result2) {
+                    alert('法律聲明已儲存！');
+                } else {
+                    alert('儲存時發生錯誤，請檢查主控台。');
+                }
+            }
+
+            // =================================================================
+            // 將函式暴露到全域，以便 HTML 中的 onclick 使用
+            // =================================================================
+            window.app = {
+                editShop: openShopModalForEdit,
+                deleteShop,
+                deleteSubscriber
+            };
+
+            // =================================================================
+            // 程式進入點
+            // =================================================================
+            init();
         });
-        
-        document.getElementById('add-shop-button').addEventListener('click', () => openShopModal());
-        document.getElementById('cancel-modal-button').addEventListener('click', () => closeModal('shop-modal'));
-        document.getElementById('batch-upload-button').addEventListener('click', () => document.getElementById('batch-upload-modal').classList.add('active'));
-        document.getElementById('cancel-batch-upload-button').addEventListener('click', () => closeModal('batch-upload-modal'));
-        document.getElementById('submit-batch-upload-button').addEventListener('click', handleBatchUpload);
-        
-        document.getElementById('export-csv-button').addEventListener('click', () => {
-            const csv = Papa.unparse(allSubscribersData);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", "subscribers.csv");
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-        
-        document.getElementById('publish-announcement-button').addEventListener('click', async () => {
-            const content = document.getElementById('announcement-content').value;
-            await apiCall('setAnnouncement', { content }, true);
-            alert('公告已發布！');
-        });
-    });
     </script>
 </body>
 </html>
