@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>永續商店地圖 - 管理後台</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Inter', 'Noto Sans TC', sans-serif; }
@@ -56,29 +57,20 @@
         <main class="container mx-auto p-6">
             <!-- Tab 按鈕 -->
             <div class="mb-6 border-b border-gray-200">
-                <nav class="flex space-x-4" aria-label="Tabs">
-                    <button class="tab-btn active-tab" data-tab="dashboard">
-                        <i class="fas fa-tachometer-alt mr-2"></i>儀表板
-                    </button>
-                    <button class="tab-btn" data-tab="shops">
-                        <i class="fas fa-store mr-2"></i>商店管理
-                    </button>
-                    <button class="tab-btn" data-tab="subscribers">
-                        <i class="fas fa-users mr-2"></i>訂閱者管理
-                    </button>
-                    <button class="tab-btn" data-tab="announcement">
-                        <i class="fas fa-bullhorn mr-2"></i>公告管理
-                    </button>
-                    <button class="tab-btn" data-tab="policies">
-                        <i class="fas fa-file-contract mr-2"></i>法律聲明
-                    </button>
+                <nav class="flex flex-wrap -mb-px" aria-label="Tabs">
+                    <button class="tab-btn active-tab" data-tab="dashboard"><i class="fas fa-tachometer-alt mr-2"></i>儀表板</button>
+                    <button class="tab-btn" data-tab="shops"><i class="fas fa-store mr-2"></i>商店管理</button>
+                    <button class="tab-btn" data-tab="subscribers"><i class="fas fa-users mr-2"></i>訂閱者管理</button>
+                    <button class="tab-btn" data-tab="recommendations"><i class="fas fa-envelope-open-text mr-2"></i>推薦信管理</button>
+                    <button class="tab-btn" data-tab="announcement"><i class="fas fa-bullhorn mr-2"></i>公告管理</button>
+                    <button class="tab-btn" data-tab="policies"><i class="fas fa-file-contract mr-2"></i>法律聲明</button>
                 </nav>
             </div>
 
             <!-- Tab 內容 -->
             <div id="dashboard" class="tab-content active">
                 <h2 class="text-3xl font-bold mb-6">儀表板</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="bg-white p-6 rounded-lg shadow">
                         <h3 class="text-xl font-semibold mb-2">商店總數</h3>
                         <p id="total-shops" class="text-4xl font-bold text-blue-600">0</p>
@@ -88,12 +80,16 @@
                         <p id="total-subscribers" class="text-4xl font-bold text-green-600">0</p>
                     </div>
                 </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-semibold mb-4">近 30 天訂閱者新增趨勢</h3>
+                    <canvas id="subscriber-chart"></canvas>
+                </div>
             </div>
 
             <div id="shops" class="tab-content">
-                <h2 class="text-3xl font-bold mb-6">商店管理</h2>
+                 <h2 class="text-3xl font-bold mb-6">商店管理</h2>
                 <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
                         <button id="add-shop-btn" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">新增商店</button>
                         <div>
                             <label for="csv-upload" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 cursor-pointer">
@@ -104,18 +100,8 @@
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
-                            <thead>
-                                <tr class="bg-gray-100">
-                                    <th class="p-3">ID</th>
-                                    <th class="p-3">名稱 (中)</th>
-                                    <th class="p-3">類型</th>
-                                    <th class="p-3">地址</th>
-                                    <th class="p-3">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="shops-table-body">
-                                <!-- 商店資料將會動態插入這裡 -->
-                            </tbody>
+                            <thead><tr class="bg-gray-100"><th class="p-3">ID</th><th class="p-3">名稱 (中)</th><th class="p-3">類型</th><th class="p-3">地址</th><th class="p-3">操作</th></tr></thead>
+                            <tbody id="shops-table-body"></tbody>
                         </table>
                     </div>
                 </div>
@@ -124,25 +110,49 @@
             <div id="subscribers" class="tab-content">
                 <h2 class="text-3xl font-bold mb-6">訂閱者管理</h2>
                  <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold">訂閱者列表</h3>
-                        <button id="send-bulk-recommendation-btn" class="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600">
-                            <i class="fas fa-envelope-open-text mr-2"></i>群發商店推薦信
-                        </button>
-                    </div>
+                    <h3 class="text-xl font-semibold mb-4">訂閱者列表</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
-                            <thead>
-                                <tr class="bg-gray-100">
-                                    <th class="p-3">Email</th>
-                                    <th class="p-3">訂閱時間</th>
-                                    <th class="p-3">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="subscribers-table-body">
-                                <!-- 訂閱者資料將會動態插入這裡 -->
-                            </tbody>
+                            <thead><tr class="bg-gray-100"><th class="p-3">Email</th><th class="p-3">訂閱時間</th><th class="p-3">操作</th></tr></thead>
+                            <tbody id="subscribers-table-body"></tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="recommendations" class="tab-content">
+                <h2 class="text-3xl font-bold mb-6">推薦信管理</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 單筆寄送 -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">單筆寄送</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="single-recipient-email" class="block text-sm font-medium text-gray-700">收件人 Email</label>
+                                <input type="email" id="single-recipient-email" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="example@email.com">
+                            </div>
+                            <div>
+                                <label for="single-recommend-shop" class="block text-sm font-medium text-gray-700">選擇商店</label>
+                                <select id="single-recommend-shop" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></select>
+                            </div>
+                            <button id="send-single-recommend-btn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">寄送單筆推薦</button>
+                        </div>
+                    </div>
+                    <!-- 群發寄送 -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">群發寄送 (給所有訂閱者)</h3>
+                        <div class="space-y-4">
+                             <div>
+                                <label for="bulk-recommend-shop" class="block text-sm font-medium text-gray-700">選擇商店</label>
+                                <select id="bulk-recommend-shop" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></select>
+                            </div>
+                            <div>
+                                <label for="bulk-confirm-text" class="block text-sm font-medium text-gray-700">安全確認</label>
+                                <p class="text-sm text-gray-500">請輸入「<code class="text-red-600 bg-red-100 p-1 rounded">我確定，要群發</code>」以啟用按鈕。</p>
+                                <input type="text" id="bulk-confirm-text" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                            </div>
+                            <button id="send-bulk-recommend-btn" class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 disabled:bg-gray-400" disabled>確認群發</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -179,27 +189,17 @@
             <form id="shop-form">
                 <input type="hidden" id="shop-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="shop-name_zh-TW" placeholder="名稱 (中)" class="p-2 border rounded" required>
-                    <input type="text" id="shop-name_en" placeholder="名稱 (英)" class="p-2 border rounded">
-                    <input type="text" id="shop-type_zh-TW" placeholder="類型 (中)" class="p-2 border rounded">
-                    <input type="text" id="shop-type_en" placeholder="類型 (英)" class="p-2 border rounded">
-                    <input type="text" id="shop-address_zh-TW" placeholder="地址 (中)" class="p-2 border rounded col-span-2">
-                    <input type="text" id="shop-address_en" placeholder="地址 (英)" class="p-2 border rounded col-span-2">
-                    <input type="text" id="shop-hours_zh-TW" placeholder="營業時間 (中)" class="p-2 border rounded">
-                    <input type="text" id="shop-hours_en" placeholder="營業時間 (英)" class="p-2 border rounded">
-                    <input type="text" id="shop-phone" placeholder="電話" class="p-2 border rounded">
-                    <input type="email" id="shop-email" placeholder="Email" class="p-2 border rounded">
+                    <input type="text" id="shop-name_zh-TW" placeholder="名稱 (中)" class="p-2 border rounded" required><input type="text" id="shop-name_en" placeholder="名稱 (英)" class="p-2 border rounded">
+                    <input type="text" id="shop-type_zh-TW" placeholder="類型 (中)" class="p-2 border rounded"><input type="text" id="shop-type_en" placeholder="類型 (英)" class="p-2 border rounded">
+                    <input type="text" id="shop-address_zh-TW" placeholder="地址 (中)" class="p-2 border rounded col-span-2"><input type="text" id="shop-address_en" placeholder="地址 (英)" class="p-2 border rounded col-span-2">
+                    <input type="text" id="shop-hours_zh-TW" placeholder="營業時間 (中)" class="p-2 border rounded"><input type="text" id="shop-hours_en" placeholder="營業時間 (英)" class="p-2 border rounded">
+                    <input type="text" id="shop-phone" placeholder="電話" class="p-2 border rounded"><input type="email" id="shop-email" placeholder="Email" class="p-2 border rounded">
                     <input type="url" id="shop-website" placeholder="網站" class="p-2 border rounded col-span-2">
-                    <textarea id="shop-description_zh-TW" placeholder="簡短描述 (中)" class="p-2 border rounded col-span-2 h-20"></textarea>
-                    <textarea id="shop-description_en" placeholder="簡短描述 (英)" class="p-2 border rounded col-span-2 h-20"></textarea>
-                    <textarea id="shop-longDescription_zh-TW" placeholder="詳細描述 (中)" class="p-2 border rounded col-span-2 h-32"></textarea>
-                    <textarea id="shop-longDescription_en" placeholder="詳細描述 (英)" class="p-2 border rounded col-span-2 h-32"></textarea>
-                    <textarea id="shop-sustainability_zh-TW" placeholder="永續特色 (中)" class="p-2 border rounded col-span-2 h-24"></textarea>
-                    <textarea id="shop-sustainability_en" placeholder="永續特色 (英)" class="p-2 border rounded col-span-2 h-24"></textarea>
-                    <input type="text" id="shop-tags_zh-TW" placeholder="標籤 (中，用逗號分隔)" class="p-2 border rounded">
-                    <input type="text" id="shop-tags_en" placeholder="標籤 (英，用逗號分隔)" class="p-2 border rounded">
-                    <input type="number" step="any" id="shop-lat" placeholder="緯度" class="p-2 border rounded" required>
-                    <input type="number" step="any" id="shop-lng" placeholder="經度" class="p-2 border rounded" required>
+                    <textarea id="shop-description_zh-TW" placeholder="簡短描述 (中)" class="p-2 border rounded col-span-2 h-20"></textarea><textarea id="shop-description_en" placeholder="簡短描述 (英)" class="p-2 border rounded col-span-2 h-20"></textarea>
+                    <textarea id="shop-longDescription_zh-TW" placeholder="詳細描述 (中)" class="p-2 border rounded col-span-2 h-32"></textarea><textarea id="shop-longDescription_en" placeholder="詳細描述 (英)" class="p-2 border rounded col-span-2 h-32"></textarea>
+                    <textarea id="shop-sustainability_zh-TW" placeholder="永續特色 (中)" class="p-2 border rounded col-span-2 h-24"></textarea><textarea id="shop-sustainability_en" placeholder="永續特色 (英)" class="p-2 border rounded col-span-2 h-24"></textarea>
+                    <input type="text" id="shop-tags_zh-TW" placeholder="標籤 (中，用逗號分隔)" class="p-2 border rounded"><input type="text" id="shop-tags_en" placeholder="標籤 (英，用逗號分隔)" class="p-2 border rounded">
+                    <input type="number" step="any" id="shop-lat" placeholder="緯度" class="p-2 border rounded" required><input type="number" step="any" id="shop-lng" placeholder="經度" class="p-2 border rounded" required>
                 </div>
                 <div class="mt-6 flex justify-end space-x-4">
                     <button type="button" id="cancel-shop-btn" class="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">取消</button>
@@ -209,46 +209,18 @@
         </div>
     </div>
 
-    <!-- 推薦信 Modal -->
-    <div id="recommendation-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-40">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h2 class="text-2xl font-bold mb-6">選擇要推薦的商店</h2>
-            <select id="recommendation-shop-select" class="w-full p-3 border rounded-md mb-4">
-                <!-- 商店選項將動態載入 -->
-            </select>
-            <div class="flex justify-end space-x-4">
-                <button type="button" id="cancel-recommendation-btn" class="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">取消</button>
-                <button type="button" id="confirm-recommendation-btn" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">確認發送</button>
-            </div>
-        </div>
-    </div>
-
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // =================================================================
             // 全域變數 & 常數
             // =================================================================
-            const GAS_URL = 'https://script.google.com/macros/s/AKfycbyvp_1h7Tc4NSXGpuqqHTekgkeEkzXtr5wjK1M2GVrRirZbusywH46SYnMS2sQwK7aIoA/exec'; // 已更新為您最新的 Apps Script URL
+            const GAS_URL = 'https://script.google.com/macros/s/AKfycbwEtxD1fYJsXUdK7m6Q5mMWpOceRoO7THPjNpleEckzgAReJOcZYf77Hf9soPCTA2DqTA/exec'; // 請務必替換成您最新的 Apps Script URL
             let ADMIN_TOKEN = null;
             let ALL_SHOPS = [];
-            let ALL_SUBSCRIBERS = [];
+            let SUBSCRIBER_CHART = null;
 
             // =================================================================
-            // DOM 元素
-            // =================================================================
-            const loginModal = document.getElementById('login-modal');
-            const passwordInput = document.getElementById('password-input');
-            const loginButton = document.getElementById('login-button');
-            const loginError = document.getElementById('login-error');
-            const mainContainer = document.getElementById('main-container');
-            const logoutButton = document.getElementById('logout-button');
-            const fullScreenLoader = document.getElementById('full-screen-loader');
-            const shopModal = document.getElementById('shop-modal');
-            const recommendationModal = document.getElementById('recommendation-modal');
-
-            // =================================================================
-            // API 呼叫函式
+            // [DEBUG FIX] API 呼叫函式
             // =================================================================
             async function apiCall(action, payload = {}, useAdminToken = true) {
                 showLoader(true);
@@ -263,17 +235,19 @@
                     requestBody.token = ADMIN_TOKEN;
                 }
 
+                // 將整個 requestBody 物件轉換為字串，並透過 URL 參數傳遞
+                const requestDataString = encodeURIComponent(JSON.stringify(requestBody));
+                const finalUrl = `${GAS_URL}?data=${requestDataString}`;
+
                 try {
-                    const response = await fetch(GAS_URL, {
+                    // 我們仍然使用 POST，但 body 是空的，所有資料都在 URL 中
+                    const response = await fetch(finalUrl, {
                         method: 'POST',
-                        body: JSON.stringify(requestBody),
-                        headers: { 'Content-Type': 'application/json' },
-                        redirect: 'follow'
+                        mode: 'cors',
                     });
+                    if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
                     const result = await response.json();
-                    if (!result.success) {
-                        throw new Error(result.data.message || 'API 請求失敗');
-                    }
+                    if (!result.success) throw new Error(result.data.message || 'API 請求失敗');
                     return result.data;
                 } catch (error) {
                     console.error(`API Error (${action}):`, error);
@@ -285,60 +259,46 @@
             }
 
             // =================================================================
-            // 初始設定 & 驗證
+            // 初始設定 & 事件監聽
             // =================================================================
             function init() {
                 ADMIN_TOKEN = localStorage.getItem('adminToken');
                 if (ADMIN_TOKEN) {
-                    // 可以在這裡加一個 token 驗證的 API call，例如取得儀表板資料
-                    // 如果成功就顯示主畫面，失敗就顯示登入畫面
                     showMain();
                     loadAllData();
                 } else {
                     showLogin();
                 }
-
                 setupEventListeners();
             }
 
             function setupEventListeners() {
                 loginButton.addEventListener('click', handleLogin);
-                passwordInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') handleLogin();
-                });
+                passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
                 logoutButton.addEventListener('click', handleLogout);
-
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-                });
-
-                // 商店管理
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
                 document.getElementById('add-shop-btn').addEventListener('click', openShopModalForAdd);
                 document.getElementById('shop-form').addEventListener('submit', handleSaveShop);
                 document.getElementById('cancel-shop-btn').addEventListener('click', () => toggleModal('shop-modal', false));
                 document.getElementById('csv-upload').addEventListener('change', handleCsvUpload);
-
-                // 訂閱者管理
-                document.getElementById('send-bulk-recommendation-btn').addEventListener('click', openRecommendationModal);
-                document.getElementById('cancel-recommendation-btn').addEventListener('click', () => toggleModal('recommendation-modal', false));
-                document.getElementById('confirm-recommendation-btn').addEventListener('click', handleSendBulkRecommendation);
-                
-                // 公告 & 政策
                 document.getElementById('save-announcement-btn').addEventListener('click', saveAnnouncement);
                 document.getElementById('save-policies-btn').addEventListener('click', savePolicies);
+                // 推薦信
+                document.getElementById('send-single-recommend-btn').addEventListener('click', handleSendSingleRecommendation);
+                document.getElementById('send-bulk-recommend-btn').addEventListener('click', handleSendBulkRecommendation);
+                document.getElementById('bulk-confirm-text').addEventListener('input', (e) => {
+                    const confirmBtn = document.getElementById('send-bulk-recommend-btn');
+                    confirmBtn.disabled = e.target.value !== '我確定，要群發';
+                });
             }
 
             // =================================================================
-            // 登入 & 登出邏輯
+            // 登入 & 登出
             // =================================================================
             async function handleLogin() {
                 const password = passwordInput.value;
-                if (!password) {
-                    loginError.textContent = '請輸入密碼。';
-                    return;
-                }
+                if (!password) { loginError.textContent = '請輸入密碼。'; return; }
                 loginError.textContent = '';
-                
                 const data = await apiCall('adminLogin', { password }, false);
                 if (data && data.token) {
                     ADMIN_TOKEN = data.token;
@@ -357,149 +317,101 @@
             }
 
             // =================================================================
-            // UI 控制函式
+            // UI 控制
             // =================================================================
-            function showLogin() {
-                loginModal.classList.add('active');
-                mainContainer.classList.add('hidden');
-            }
-
-            function showMain() {
-                loginModal.classList.remove('active');
-                mainContainer.classList.remove('hidden');
-            }
-
-            function showLoader(show) {
-                fullScreenLoader.style.display = show ? 'flex' : 'none';
-            }
-            
-            function toggleModal(modalId, show) {
-                document.getElementById(modalId).style.display = show ? 'flex' : 'none';
-            }
+            const showLogin = () => { loginModal.classList.add('active'); mainContainer.classList.add('hidden'); };
+            const showMain = () => { loginModal.classList.remove('active'); mainContainer.classList.remove('hidden'); };
+            const showLoader = (show) => { fullScreenLoader.style.display = show ? 'flex' : 'none'; };
+            const toggleModal = (modalId, show) => { document.getElementById(modalId).style.display = show ? 'flex' : 'none'; };
 
             function switchTab(tabId) {
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.classList.remove('active-tab');
-                });
-
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
                 document.getElementById(tabId).classList.add('active');
                 document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active-tab');
             }
             
-            // CSS for active tab
             const style = document.createElement('style');
-            style.innerHTML = `
-                .tab-btn {
-                    padding: 8px 16px;
-                    cursor: pointer;
-                    border-bottom: 2px solid transparent;
-                    transition: all 0.3s ease;
-                    color: #6B7280; /* gray-500 */
-                }
-                .tab-btn:hover {
-                    color: #1F2937; /* gray-800 */
-                }
-                .tab-btn.active-tab {
-                    color: #3B82F6; /* blue-500 */
-                    border-color: #3B82F6; /* blue-500 */
-                    font-weight: 600;
-                }
-            `;
+            style.innerHTML = `.tab-btn { padding: 8px 16px; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.3s ease; color: #6B7280; } .tab-btn:hover { color: #1F2937; } .tab-btn.active-tab { color: #3B82F6; border-color: #3B82F6; font-weight: 600; }`;
             document.head.appendChild(style);
 
             // =================================================================
             // 資料載入 & 渲染
             // =================================================================
             async function loadAllData() {
-                await loadDashboardData();
-                await loadShops();
-                await loadSubscribers();
-                await loadAnnouncement();
-                await loadPolicies();
-            }
-
-            async function loadDashboardData() {
                 const shopsData = await apiCall('getShopsData');
-                const subscribersData = await apiCall('getSubscribersData');
                 if (shopsData) {
-                    document.getElementById('total-shops').textContent = shopsData.length;
                     ALL_SHOPS = shopsData;
+                    document.getElementById('total-shops').textContent = shopsData.length;
+                    renderShopsTable(shopsData);
+                    populateShopSelects(shopsData);
                 }
+                const subscribersData = await apiCall('getSubscribersData');
                 if (subscribersData) {
                     document.getElementById('total-subscribers').textContent = subscribersData.length;
-                    ALL_SUBSCRIBERS = subscribersData;
+                    renderSubscribersTable(subscribersData);
                 }
+                const statsData = await apiCall('getStats');
+                if (statsData) {
+                    renderSubscriberChart(statsData.subscriberTrends);
+                }
+                loadAnnouncement();
+                loadPolicies();
             }
 
-            async function loadShops() {
-                const data = await apiCall('getShopsData');
-                if (!data) return;
-                ALL_SHOPS = data;
-                renderShopsTable(data);
-                document.getElementById('total-shops').textContent = data.length;
-            }
-
-            function renderShopsTable(shops) {
+            const renderShopsTable = (shops) => {
                 const tbody = document.getElementById('shops-table-body');
-                tbody.innerHTML = '';
-                if (shops.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center">沒有商店資料。</td></tr>';
-                    return;
-                }
-                shops.forEach(shop => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'border-b hover:bg-gray-50';
-                    tr.innerHTML = `
-                        <td class="p-3">${shop.id}</td>
-                        <td class="p-3">${shop['name_zh-TW']}</td>
-                        <td class="p-3">${shop['type_zh-TW']}</td>
-                        <td class="p-3">${shop['address_zh-TW']}</td>
+                tbody.innerHTML = shops.length ? shops.map(shop => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">${shop.id}</td><td class="p-3">${shop['name_zh-TW']}</td>
+                        <td class="p-3">${shop['type_zh-TW']}</td><td class="p-3">${shop['address_zh-TW']}</td>
                         <td class="p-3">
-                            <button class="text-blue-600 hover:text-blue-800 mr-2" onclick="window.app.editShop('${shop.id}')"><i class="fas fa-edit"></i></button>
-                            <button class="text-red-600 hover:text-red-800" onclick="window.app.deleteShop('${shop.id}')"><i class="fas fa-trash"></i></button>
+                            <button class="text-blue-600 hover:text-blue-800 mr-2" onclick="app.editShop('${shop.id}')"><i class="fas fa-edit"></i></button>
+                            <button class="text-red-600 hover:text-red-800" onclick="app.deleteShop('${shop.id}')"><i class="fas fa-trash"></i></button>
                         </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
+                    </tr>`).join('') : '<tr><td colspan="5" class="p-3 text-center">沒有商店資料。</td></tr>';
+            };
 
-            async function loadSubscribers() {
-                const data = await apiCall('getSubscribersData');
-                if (!data) return;
-                ALL_SUBSCRIBERS = data;
-                renderSubscribersTable(data);
-                document.getElementById('total-subscribers').textContent = data.length;
-            }
-
-            function renderSubscribersTable(subscribers) {
+            const renderSubscribersTable = (subscribers) => {
                 const tbody = document.getElementById('subscribers-table-body');
-                tbody.innerHTML = '';
-                if (subscribers.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-center">沒有訂閱者資料。</td></tr>';
-                    return;
-                }
-                subscribers.forEach(sub => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'border-b hover:bg-gray-50';
-                    tr.innerHTML = `
-                        <td class="p-3">${sub.email}</td>
-                        <td class="p-3">${new Date(sub.timestamp).toLocaleString()}</td>
+                tbody.innerHTML = subscribers.length ? subscribers.map(sub => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">${sub.email}</td><td class="p-3">${new Date(sub.timestamp).toLocaleString()}</td>
                         <td class="p-3">
-                            <button class="text-red-600 hover:text-red-800" onclick="window.app.deleteSubscriber('${sub.email}')"><i class="fas fa-trash"></i></button>
+                            <button class="text-red-600 hover:text-red-800" onclick="app.deleteSubscriber('${sub.email}')"><i class="fas fa-trash"></i></button>
                         </td>
-                    `;
-                    tbody.appendChild(tr);
+                    </tr>`).join('') : '<tr><td colspan="3" class="p-3 text-center">沒有訂閱者資料。</td></tr>';
+            };
+
+            const renderSubscriberChart = (chartData) => {
+                const ctx = document.getElementById('subscriber-chart').getContext('2d');
+                if (SUBSCRIBER_CHART) SUBSCRIBER_CHART.destroy();
+                SUBSCRIBER_CHART = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: '每日新增訂閱數',
+                            data: chartData.data,
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: true }
                 });
-            }
+            };
+            
+            const populateShopSelects = (shops) => {
+                const options = `<option value="">-- 請選擇一家商店 --</option>` + shops.map(s => `<option value="${s.id}">${s['name_zh-TW']}</option>`).join('');
+                document.getElementById('single-recommend-shop').innerHTML = options;
+                document.getElementById('bulk-recommend-shop').innerHTML = options;
+            };
 
             async function loadAnnouncement() {
                 const data = await apiCall('getAnnouncementData');
-                if (data !== null) {
-                    document.getElementById('announcement-text').value = data;
-                }
+                if (data !== null) document.getElementById('announcement-text').value = data;
             }
 
             async function loadPolicies() {
@@ -511,40 +423,31 @@
             }
 
             // =================================================================
-            // 商店管理邏輯
+            // 商店管理
             // =================================================================
-            function openShopModalForAdd() {
+            const openShopModalForAdd = () => {
                 document.getElementById('shop-form').reset();
                 document.getElementById('shop-id').value = '';
                 document.getElementById('shop-modal-title').textContent = '新增商店';
                 toggleModal('shop-modal', true);
-            }
+            };
 
-            function openShopModalForEdit(shopId) {
+            const openShopModalForEdit = (shopId) => {
                 const shop = ALL_SHOPS.find(s => String(s.id) === String(shopId));
-                if (!shop) {
-                    alert('找不到指定的商店！');
-                    return;
-                }
+                if (!shop) { alert('找不到指定的商店！'); return; }
                 document.getElementById('shop-modal-title').textContent = '編輯商店';
-                
-                // 填充表單
                 Object.keys(shop).forEach(key => {
                     const input = document.getElementById(`shop-${key}`);
-                    if (input) {
-                        input.value = shop[key];
-                    }
+                    if (input) input.value = shop[key];
                 });
-                // 處理 hidden id
                 document.getElementById('shop-id').value = shop.id;
-
                 toggleModal('shop-modal', true);
-            }
+            };
 
             async function handleSaveShop(event) {
                 event.preventDefault();
-                const shopId = document.getElementById('shop-id').value;
                 const shopData = {};
+                new FormData(document.getElementById('shop-form')).forEach((value, key) => shopData[key.replace('shop-','')] = value);
                 const form = document.getElementById('shop-form');
                 const inputs = form.querySelectorAll('input, textarea');
                 inputs.forEach(input => {
@@ -553,145 +456,99 @@
                         shopData[key] = input.value;
                     }
                 });
-                
-                // 如果是新增，但沒有 id，則產生一個
-                if (!shopData.id) {
-                    shopData.id = `shop-${Date.now()}`;
-                }
 
-                const action = shopId ? 'editShop' : 'addShop';
+                if (!shopData.id) shopData.id = `shop-${Date.now()}`;
+                const action = document.getElementById('shop-id').value ? 'editShop' : 'addShop';
                 const result = await apiCall(action, shopData);
                 if (result) {
                     alert('商店資料已儲存！');
                     toggleModal('shop-modal', false);
-                    await loadShops();
+                    loadAllData();
                 }
             }
 
             async function deleteShop(shopId) {
                 if (!confirm(`確定要刪除 ID 為 ${shopId} 的商店嗎？`)) return;
                 const result = await apiCall('deleteShop', { shopId });
-                if (result) {
-                    alert('商店已刪除！');
-                    await loadShops();
-                }
+                if (result) { alert('商店已刪除！'); loadAllData(); }
             }
             
             function handleCsvUpload(event) {
                 const file = event.target.files[0];
                 if (!file) return;
-
                 const reader = new FileReader();
                 reader.onload = async (e) => {
-                    const text = e.target.result;
-                    const shops = parseCsv(text);
-                    if (shops.length > 0) {
-                        if (confirm(`從 CSV 讀取到 ${shops.length} 筆商店資料。確定要批次新增/更新嗎？`)) {
-                            const result = await apiCall('batchAddOrUpdateShops', { shops });
-                            if (result) {
-                                alert(`操作完成！新增 ${result.added} 筆，更新 ${result.updated} 筆。`);
-                                await loadShops();
-                            }
+                    const shops = parseCsv(e.target.result);
+                    if (shops.length > 0 && confirm(`從 CSV 讀取到 ${shops.length} 筆商店資料。確定要批次新增/更新嗎？`)) {
+                        const result = await apiCall('batchAddOrUpdateShops', { shops });
+                        if (result) {
+                            alert(`操作完成！新增 ${result.added} 筆，更新 ${result.updated} 筆。`);
+                            loadAllData();
                         }
-                    } else {
+                    } else if (shops.length === 0) {
                         alert('無法從 CSV 檔案中解析出商店資料。請檢查格式是否正確。');
                     }
                 };
-                reader.readAsText(file);
+                reader.readAsText(file, 'UTF-8');
             }
 
             function parseCsv(csvText) {
-                const lines = csvText.split(/\r?\n/);
+                const lines = csvText.split(/\r?\n/).filter(line => line);
                 if (lines.length < 2) return [];
                 const headers = lines[0].split(',').map(h => h.trim());
-                const shops = [];
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i]) continue;
-                    const values = lines[i].split(','); // 簡易版 CSV 解析，不處理引號內的逗號
+                return lines.slice(1).map(line => {
+                    const values = line.split(','); // 簡易解析
                     const shop = {};
-                    headers.forEach((header, index) => {
-                        shop[header] = values[index] ? values[index].trim() : '';
-                    });
-                    if (shop.id) { // 必須要有 id
-                        shops.push(shop);
-                    }
-                }
-                return shops;
+                    headers.forEach((header, index) => shop[header] = values[index]?.trim() ?? '');
+                    return shop.id ? shop : null;
+                }).filter(Boolean);
             }
 
             // =================================================================
-            // 訂閱者管理邏輯
+            // 訂閱者 & 推薦信
             // =================================================================
             async function deleteSubscriber(email) {
                 if (!confirm(`確定要刪除訂閱者 ${email} 嗎？`)) return;
                 const result = await apiCall('removeSubscriber', { email });
-                if (result) {
-                    alert('訂閱者已刪除！');
-                    await loadSubscribers();
-                }
+                if (result) { alert('訂閱者已刪除！'); loadAllData(); }
             }
 
-            function openRecommendationModal() {
-                const select = document.getElementById('recommendation-shop-select');
-                select.innerHTML = '<option value="">-- 請選擇一家商店 --</option>';
-                ALL_SHOPS.forEach(shop => {
-                    const option = document.createElement('option');
-                    option.value = shop.id;
-                    option.textContent = `${shop['name_zh-TW']} (${shop.id})`;
-                    select.appendChild(option);
-                });
-                toggleModal('recommendation-modal', true);
+            async function handleSendSingleRecommendation() {
+                const recipientEmail = document.getElementById('single-recipient-email').value;
+                const shopId = document.getElementById('single-recommend-shop').value;
+                if (!recipientEmail || !shopId) { alert('請填寫 Email 並選擇商店。'); return; }
+                if (!confirm(`確定要將商店 (ID: ${shopId}) 的推薦信寄給 ${recipientEmail} 嗎？`)) return;
+                const result = await apiCall('sendRecommendation', { shopId, recipientEmail });
+                if (result) { alert(result.message); }
             }
-
+            
             async function handleSendBulkRecommendation() {
-                const shopId = document.getElementById('recommendation-shop-select').value;
-                if (!shopId) {
-                    alert('請選擇要推薦的商店。');
-                    return;
-                }
-                
-                if (!confirm(`確定要將商店 (ID: ${shopId}) 的推薦信寄給所有 ${ALL_SUBSCRIBERS.length} 位訂閱者嗎？這個操作可能需要一些時間。`)) return;
-
+                const shopId = document.getElementById('bulk-recommend-shop').value;
+                if (!shopId) { alert('請選擇要推薦的商店。'); return; }
+                const total = document.getElementById('total-subscribers').textContent;
+                if (!confirm(`確定要將商店 (ID: ${shopId}) 的推薦信寄給所有 ${total} 位訂閱者嗎？`)) return;
                 const result = await apiCall('sendBulkRecommendations', { shopId });
-                if (result) {
-                    alert(result.message || '群發郵件任務已啟動。');
-                    toggleModal('recommendation-modal', false);
-                }
+                if (result) { alert(result.message); }
             }
 
             // =================================================================
-            // 公告 & 政策邏輯
+            // 公告 & 政策
             // =================================================================
             async function saveAnnouncement() {
                 const content = document.getElementById('announcement-text').value;
-                const result = await apiCall('setAnnouncement', { content });
-                if (result) {
-                    alert('公告已更新！');
-                }
+                if (await apiCall('setAnnouncement', { content })) alert('公告已更新！');
             }
 
             async function savePolicies() {
-                const privacyValue = document.getElementById('privacy-policy-text').value;
-                const disclaimerValue = document.getElementById('disclaimer-text').value;
-
-                const result1 = await apiCall('setPolicy', { key: 'privacy', value: privacyValue });
-                const result2 = await apiCall('setPolicy', { key: 'disclaimer', value: disclaimerValue });
-
-                if (result1 && result2) {
-                    alert('法律聲明已儲存！');
-                } else {
-                    alert('儲存時發生錯誤，請檢查主控台。');
-                }
+                const privacy = apiCall('setPolicy', { key: 'privacy', value: document.getElementById('privacy-policy-text').value });
+                const disclaimer = apiCall('setPolicy', { key: 'disclaimer', value: document.getElementById('disclaimer-text').value });
+                if (await privacy && await disclaimer) alert('法律聲明已儲存！');
             }
 
             // =================================================================
-            // 將函式暴露到全域，以便 HTML 中的 onclick 使用
+            // 全域暴露函式
             // =================================================================
-            window.app = {
-                editShop: openShopModalForEdit,
-                deleteShop,
-                deleteSubscriber
-            };
+            window.app = { editShop: openShopModalForEdit, deleteShop, deleteSubscriber };
 
             // =================================================================
             // 程式進入點
