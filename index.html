@@ -283,9 +283,11 @@
                 }
                 
                 try {
+                    // Use window.fetch to avoid potential interceptors
                     const response = await window.fetch(GAS_URL, {
                         method: 'POST',
                         body: form,
+                        // NO headers, NO mode, NO credentials to ensure a simple request
                     });
                     
                     const result = await response.json();
@@ -345,10 +347,13 @@
                 showLoader(true);
                 const form = new URLSearchParams();
                 form.set('action', 'adminLogin');
-                form.set('password', password);
+                form.set('password', password); // Send password directly for login as a form field
 
                 try {
-                    const response = await window.fetch(GAS_URL, { method: 'POST', body: form });
+                    const response = await window.fetch(GAS_URL, { 
+                        method: 'POST', 
+                        body: form 
+                    });
                     const data = await response.json();
                     if (data && data.success && data.data.token) {
                         ADMIN_TOKEN = data.data.token;
