@@ -392,11 +392,11 @@
             // =================================================================
             async function loadAllData() {
                 const [shopsData, subscribersData, statsData, announcementData, policiesData] = await Promise.all([
-                    apiCall('getShopsData'),
-                    apiCall('getSubscribersData'),
-                    apiCall('getStats'),
-                    apiCall('getAnnouncementData'),
-                    apiCall('getPoliciesData')
+                    apiCall('getShopsData', {}, true),
+                    apiCall('getSubscribersData', {}, true),
+                    apiCall('getStats', {}, true),
+                    apiCall('getAnnouncementData', {}, true),
+                    apiCall('getPoliciesData', {}, true)
                 ]);
 
                 if (shopsData) {
@@ -520,7 +520,7 @@
                 }
 
                 const action = isEditing ? 'editShop' : 'addShop';
-                const result = await apiCall(action, shopData);
+                const result = await apiCall(action, shopData, true);
                 if (result) {
                     alert('商店資料已儲存！');
                     toggleModal('shop-modal', false);
@@ -530,7 +530,7 @@
 
             async function deleteShop(shopId) {
                 if (!confirm(`確定要刪除 ID 為 ${shopId} 的商店嗎？此操作無法復原。`)) return;
-                const result = await apiCall('deleteShop', { shopId });
+                const result = await apiCall('deleteShop', { shopId }, true);
                 if (result) { alert('商店已刪除！'); loadAllData(); }
             }
             
@@ -543,7 +543,7 @@
                     complete: async (results) => {
                         const shops = results.data;
                         if (shops.length > 0 && confirm(`從 CSV 讀取到 ${shops.length} 筆商店資料。確定要批次新增/更新嗎？`)) {
-                            const result = await apiCall('batchAddOrUpdateShops', { shops });
+                            const result = await apiCall('batchAddOrUpdateShops', { shops }, true);
                             if (result) {
                                 alert(`操作完成！新增 ${result.added} 筆，更新 ${result.updated} 筆。`);
                                 loadAllData();
@@ -561,7 +561,7 @@
             // =================================================================
             async function deleteSubscriber(email) {
                 if (!confirm(`確定要刪除訂閱者 ${email} 嗎？`)) return;
-                const result = await apiCall('removeSubscriber', { email });
+                const result = await apiCall('removeSubscriber', { email }, true);
                 if (result) { alert('訂閱者已刪除！'); loadAllData(); }
             }
 
@@ -570,7 +570,7 @@
                 const shopId = document.getElementById('single-recommend-shop').value;
                 if (!recipientEmail || !shopId) { alert('請填寫 Email 並選擇商店。'); return; }
                 if (!confirm(`確定要將商店 (ID: ${shopId}) 的推薦信寄給 ${recipientEmail} 嗎？`)) return;
-                const result = await apiCall('sendRecommendation', { shopId, recipientEmail });
+                const result = await apiCall('sendRecommendation', { shopId, recipientEmail }, true);
                 if (result) { alert(result.message); }
             }
             
@@ -579,7 +579,7 @@
                 if (!shopId) { alert('請選擇要推薦的商店。'); return; }
                 const total = document.getElementById('total-subscribers').textContent;
                 if (!confirm(`確定要將商店 (ID: ${shopId}) 的推薦信寄給所有 ${total} 位訂閱者嗎？`)) return;
-                const result = await apiCall('sendBulkRecommendations', { shopId });
+                const result = await apiCall('sendBulkRecommendations', { shopId }, true);
                 if (result) { alert(result.message); }
             }
 
@@ -588,13 +588,13 @@
             // =================================================================
             async function saveAnnouncement() {
                 const content = document.getElementById('announcement-text').value;
-                if (await apiCall('setAnnouncement', { content }) !== null) alert('公告已更新！');
+                if (await apiCall('setAnnouncement', { content }, true) !== null) alert('公告已更新！');
             }
 
             async function savePolicies() {
-                const privacyPromise = apiCall('setPolicy', { key: 'privacy', value: document.getElementById('privacy-policy-text').value });
-                const disclaimerPromise = apiCall('setPolicy', { key: 'disclaimer', value: document.getElementById('disclaimer-text').value });
-                const [privacyResult, disclaimerResult] = await Promise.all([privacyPromise, disclaimerResult]);
+                const privacyPromise = apiCall('setPolicy', { key: 'privacy', value: document.getElementById('privacy-policy-text').value }, true);
+                const disclaimerPromise = apiCall('setPolicy', { key: 'disclaimer', value: document.getElementById('disclaimer-text').value }, true);
+                const [privacyResult, disclaimerResult] = await Promise.all([privacyPromise, disclaimerPromise]);
                 if (privacyResult && disclaimerResult) alert('法律聲明已儲存！');
             }
 
