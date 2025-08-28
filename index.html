@@ -260,7 +260,7 @@
             const fullScreenLoader = document.getElementById('full-screen-loader');
 
             // =================================================================
-            // API 呼叫函式 (MODIFIED to use URLSearchParams)
+            // API 呼叫函式 (MODIFIED to use URLSearchParams to avoid preflight)
             // =================================================================
             async function apiCall(action, payload = {}, useAdminToken = true) {
                 showLoader(true);
@@ -283,7 +283,6 @@
                 }
                 
                 try {
-                    // Use window.fetch to avoid potential interceptors
                     const response = await window.fetch(GAS_URL, {
                         method: 'POST',
                         body: form,
@@ -343,11 +342,10 @@
                 if (!password) { loginError.textContent = '請輸入密碼。'; return; }
                 loginError.textContent = '';
                 
-                // For login, we construct the form body manually
                 showLoader(true);
                 const form = new URLSearchParams();
                 form.set('action', 'adminLogin');
-                form.set('password', password); // Send password directly for login
+                form.set('password', password);
 
                 try {
                     const response = await window.fetch(GAS_URL, { method: 'POST', body: form });
@@ -532,7 +530,7 @@
 
             async function deleteShop(shopId) {
                 if (!confirm(`確定要刪除 ID 為 ${shopId} 的商店嗎？此操作無法復原。`)) return;
-                const result = await apiCall('deleteShop', { payload: { shopId } });
+                const result = await apiCall('deleteShop', { shopId });
                 if (result) { alert('商店已刪除！'); loadAllData(); }
             }
             
@@ -596,7 +594,7 @@
             async function savePolicies() {
                 const privacyPromise = apiCall('setPolicy', { key: 'privacy', value: document.getElementById('privacy-policy-text').value });
                 const disclaimerPromise = apiCall('setPolicy', { key: 'disclaimer', value: document.getElementById('disclaimer-text').value });
-                const [privacyResult, disclaimerResult] = await Promise.all([privacyPromise, disclaimerPromise]);
+                const [privacyResult, disclaimerResult] = await Promise.all([privacyPromise, disclaimerResult]);
                 if (privacyResult && disclaimerResult) alert('法律聲明已儲存！');
             }
 
