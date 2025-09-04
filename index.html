@@ -8,40 +8,15 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
         /* Custom scrollbar for better aesthetics */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-        .sidebar-item {
-            transition: all 0.2s ease-in-out;
-        }
-        .sidebar-item:hover, .sidebar-item.active {
-            background-color: #10B981; /* emerald-500 */
-            color: white;
-            transform: translateX(4px);
-        }
-        /* Style for loading indicator */
-        #loadingIndicator {
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        .spinner {
-            border-top-color: #3498db;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .sidebar-item { transition: all 0.2s ease-in-out; }
+        .sidebar-item:hover, .sidebar-item.active { background-color: #10B981; color: white; transform: translateX(4px); }
+        #loadingIndicator { background-color: rgba(0, 0, 0, 0.5); }
+        .spinner { border-top-color: #3498db; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -113,14 +88,10 @@
                                             <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="subscribersTableBody">
-                                        <!-- Subscriber rows will be inserted here -->
-                                    </tbody>
+                                    <tbody id="subscribersTableBody"></tbody>
                                 </table>
                             </div>
-                            <div id="subscriberPagination" class="mt-4 flex justify-end items-center">
-                                <!-- Pagination controls will be inserted here -->
-                            </div>
+                            <div id="subscriberPagination" class="mt-4 flex justify-end items-center"></div>
                         </div>
                     </div>
 
@@ -168,14 +139,10 @@
                                             <th class="py-3 px-6 text-center">操作</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="shopsTableBody">
-                                        <!-- Shop rows will be inserted here -->
-                                    </tbody>
+                                    <tbody id="shopsTableBody"></tbody>
                                 </table>
                             </div>
-                            <div id="shopPagination" class="mt-4 flex justify-end items-center">
-                                <!-- Shop pagination controls will be inserted here -->
-                            </div>
+                            <div id="shopPagination" class="mt-4 flex justify-end items-center"></div>
                         </div>
                     </div>
 
@@ -184,27 +151,16 @@
         </div>
     </div>
     
-    <!-- Loading Indicator -->
-    <div id="loadingIndicator" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-        <div class="spinner h-16 w-16 border-4 border-gray-300 rounded-full"></div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden transition-opacity duration-300">
-        <p id="toastMessage"></p>
-    </div>
-
-    <!-- Confirmation Modal -->
+    <!-- Modals and Indicators -->
+    <div id="loadingIndicator" class="fixed inset-0 z-50 flex items-center justify-center hidden"><div class="spinner h-16 w-16 border-4 border-gray-300 rounded-full"></div></div>
+    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden transition-opacity duration-300"><p id="toastMessage"></p></div>
+    
     <div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div class="mt-3 text-center">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                    <i class="fas fa-exclamation-triangle text-red-600 fa-lg"></i>
-                </div>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100"><i class="fas fa-exclamation-triangle text-red-600 fa-lg"></i></div>
                 <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2" id="confirmModalTitle">確認操作</h3>
-                <div class="mt-2 px-7 py-3">
-                    <p class="text-sm text-gray-500" id="confirmModalBody">您確定要執行此操作嗎？</p>
-                </div>
+                <div class="mt-2 px-7 py-3"><p class="text-sm text-gray-500" id="confirmModalBody">您確定要執行此操作嗎？</p></div>
                 <div class="items-center px-4 py-3">
                     <button id="confirmModalButton" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-red-700 focus:outline-none">確認</button>
                     <button id="cancelModalButton" class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-auto shadow-sm hover:bg-gray-400 focus:outline-none ml-2">取消</button>
@@ -213,93 +169,48 @@
         </div>
     </div>
     
-    <!-- Error Modal -->
     <div id="errorModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
         <div class="relative mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
             <div class="mt-3">
-                <div class="flex items-center justify-center mb-4">
-                     <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                        <i class="fas fa-bug text-red-600 fa-lg"></i>
-                    </div>
-                </div>
+                <div class="flex items-center justify-center mb-4"><div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100"><i class="fas fa-bug text-red-600 fa-lg"></i></div></div>
                 <h3 class="text-lg leading-6 font-medium text-gray-900 text-center">發生錯誤</h3>
                 <div class="mt-2 px-7 py-3">
                     <p class="text-sm text-gray-600 text-left mb-4">系統在與後端伺服器通訊時遇到問題。請檢查您的網路連線，並參考以下詳細資訊。</p>
-                    <div class="bg-gray-100 p-4 rounded-md max-h-64 overflow-y-auto">
-                         <pre id="errorDetails" class="text-xs text-left text-gray-800 whitespace-pre-wrap break-all"></pre>
-                    </div>
+                    <div class="bg-gray-100 p-4 rounded-md max-h-64 overflow-y-auto"><pre id="errorDetails" class="text-xs text-left text-gray-800 whitespace-pre-wrap break-all"></pre></div>
                 </div>
-                <div class="items-center px-4 py-3 text-center">
-                    <button id="closeErrorModal" class="px-6 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                        關閉
-                    </button>
-                </div>
+                <div class="items-center px-4 py-3 text-center"><button id="closeErrorModal" class="px-6 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none">關閉</button></div>
             </div>
         </div>
     </div>
 
-
-    <!-- Shop Edit/Add Modal -->
     <div id="shopModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-40">
         <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
             <h3 class="text-xl leading-6 font-medium text-gray-900 mb-4" id="shopModalTitle">編輯店家</h3>
             <form id="shopForm">
-                <input type="hidden" id="shopId">
+                <input type="hidden" id="id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[75vh] overflow-y-auto p-2">
                     <!-- Column 1 -->
                     <div>
-                        <label class="block text-sm font-medium">中文名稱</label>
-                        <input type="text" id="name_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                        
-                        <label class="block text-sm font-medium mt-4">英文名稱</label>
-                        <input type="text" id="name_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">中文地址</label>
-                        <input type="text" id="address_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">英文地址</label>
-                        <input type="text" id="address_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">緯度</label>
-                        <input type="number" step="any" id="lat" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">經度</label>
-                        <input type="number" step="any" id="lng" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">中文簡短描述</label>
-                        <textarea id="description_zh-TW" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
-
-                        <label class="block text-sm font-medium mt-4">英文簡短描述</label>
-                        <textarea id="description_en" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                        <label class="block text-sm font-medium">中文名稱</label><input type="text" id="name_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+                        <label class="block text-sm font-medium mt-4">英文名稱</label><input type="text" id="name_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">中文地址</label><input type="text" id="address_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">英文地址</label><input type="text" id="address_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">緯度</label><input type="number" step="any" id="lat" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">經度</label><input type="number" step="any" id="lng" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">中文簡短描述</label><textarea id="description_zh-TW" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                        <label class="block text-sm font-medium mt-4">英文簡短描述</label><textarea id="description_en" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
                     </div>
                     <!-- Column 2 -->
                     <div>
-                        <label class="block text-sm font-medium">中文類型</label>
-                        <input type="text" id="type_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">英文類型</label>
-                        <input type="text" id="type_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">中文標籤 (逗號分隔)</label>
-                        <input type="text" id="tags_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">英文標籤 (逗號分隔)</label>
-                        <input type="text" id="tags_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">電話</label>
-                        <input type="text" id="phone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">Email</label>
-                        <input type="email" id="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">網站</label>
-                        <input type="url" id="website" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">中文詳細描述</label>
-                        <textarea id="longDescription_zh-TW" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
-
-                        <label class="block text-sm font-medium mt-4">英文詳細描述</label>
-                        <textarea id="longDescription_en" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                        <label class="block text-sm font-medium">中文類型</label><input type="text" id="type_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">英文類型</label><input type="text" id="type_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">中文標籤 (逗號分隔)</label><input type="text" id="tags_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">英文標籤 (逗號分隔)</label><input type="text" id="tags_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">電話</label><input type="text" id="phone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">Email</label><input type="email" id="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">網站</label><input type="url" id="website" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-sm font-medium mt-4">中文詳細描述</label><textarea id="longDescription_zh-TW" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                        <label class="block text-sm font-medium mt-4">英文詳細描述</label><textarea id="longDescription_en" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
                     </div>
                 </div>
                 <div class="flex justify-end mt-4">
@@ -310,87 +221,61 @@
         </div>
     </div>
 
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // !! 重要 !! 請將此處的 URL 替換為您部署新版 code.js 後產生的新網址。
     const API_URL = 'https://script.google.com/macros/s/AKfycbyJ76tpxJ2eeRRqcv3qUqx3Z8nWLqrNsAIxgMR5vnkfmJOXulhhu1Av2T9w4AzDLg83gA/exec';
 
     // UI Elements
-    const loginScreen = document.getElementById('loginScreen');
-    const dashboard = document.getElementById('dashboard');
-    const loginButton = document.getElementById('loginButton');
-    const logoutButton = document.getElementById('logoutButton');
-    const passwordInput = document.getElementById('password');
-
-    const sidebarItems = document.querySelectorAll('.sidebar-item');
-    const contentSections = document.querySelectorAll('.content-section');
+    const ui = {
+        loginScreen: document.getElementById('loginScreen'),
+        dashboard: document.getElementById('dashboard'),
+        loginButton: document.getElementById('loginButton'),
+        logoutButton: document.getElementById('logoutButton'),
+        passwordInput: document.getElementById('password'),
+        sidebarItems: document.querySelectorAll('.sidebar-item'),
+        contentSections: document.querySelectorAll('.content-section'),
+        loadingIndicator: document.getElementById('loadingIndicator'),
+        toast: document.getElementById('toast'),
+        toastMessage: document.getElementById('toastMessage'),
+        confirmModal: document.getElementById('confirmModal'),
+        confirmModalTitle: document.getElementById('confirmModalTitle'),
+        confirmModalBody: document.getElementById('confirmModalBody'),
+        confirmModalButton: document.getElementById('confirmModalButton'),
+        cancelModalButton: document.getElementById('cancelModalButton'),
+        errorModal: document.getElementById('errorModal'),
+        errorDetails: document.getElementById('errorDetails'),
+        closeErrorModal: document.getElementById('closeErrorModal'),
+        shopModal: document.getElementById('shopModal'),
+        shopForm: document.getElementById('shopForm'),
+        shopModalTitle: document.getElementById('shopModalTitle'),
+        addShopButton: document.getElementById('addShopButton'),
+        cancelShopModal: document.getElementById('cancelShopModal'),
+    };
     
     // State
-    let subscriberState = { currentPage: 1, currentSearch: '' };
-    let shopState = { currentPage: 1, currentSearch: '' };
+    let state = {
+        subscriber: { currentPage: 1, currentSearch: '' },
+        shop: { currentPage: 1, currentSearch: '' },
+        confirmCallback: null,
+    };
 
-    // Toast Notification
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toastMessage');
+    // --- Core UI Functions ---
+    const showToast = (message, type = 'success') => {
+        ui.toastMessage.textContent = message;
+        ui.toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg transition-opacity duration-300 ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
+        ui.toast.classList.remove('hidden');
+        setTimeout(() => ui.toast.classList.add('hidden'), 3000);
+    };
 
-    // Confirmation Modal
-    const confirmModal = document.getElementById('confirmModal');
-    const confirmModalTitle = document.getElementById('confirmModalTitle');
-    const confirmModalBody = document.getElementById('confirmModalBody');
-    const confirmModalButton = document.getElementById('confirmModalButton');
-    const cancelModalButton = document.getElementById('cancelModalButton');
-    let confirmCallback = null;
-    
-    // Error Modal
-    const errorModal = document.getElementById('errorModal');
-    const errorDetails = document.getElementById('errorDetails');
-    const closeErrorModalBtn = document.getElementById('closeErrorModal');
+    const showConfirm = (title, body, onConfirm) => {
+        ui.confirmModalTitle.textContent = title;
+        ui.confirmModalBody.textContent = body;
+        state.confirmCallback = onConfirm;
+        ui.confirmModal.classList.remove('hidden');
+    };
 
-    // Shop Modal
-    const shopModal = document.getElementById('shopModal');
-
-    // --- Core Functions ---
-
-    /**
-     * Shows a toast notification.
-     * @param {string} message - The message to display.
-     * @param {string} type - 'success' or 'error'.
-     */
-    function showToast(message, type = 'success') {
-        toastMessage.textContent = message;
-        toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg transition-opacity duration-300 ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
-        toast.classList.remove('hidden');
-        setTimeout(() => {
-            toast.classList.add('hidden');
-        }, 3000);
-    }
-
-    /**
-     * Shows a confirmation modal.
-     * @param {string} title - The modal title.
-     * @param {string} body - The modal body text.
-     * @param {function} onConfirm - Callback function to execute on confirmation.
-     */
-    function showConfirm(title, body, onConfirm) {
-        confirmModalTitle.textContent = title;
-        confirmModalBody.textContent = body;
-        confirmCallback = onConfirm;
-        confirmModal.classList.remove('hidden');
-    }
-
-    cancelModalButton.addEventListener('click', () => confirmModal.classList.add('hidden'));
-    confirmModalButton.addEventListener('click', () => {
-        confirmModal.classList.add('hidden');
-        if (confirmCallback) {
-            confirmCallback();
-        }
-    });
-
-    /**
-     * Shows the error modal with detailed information.
-     * @param {object|string} details - The error details to display.
-     */
-    function showErrorModal(details) {
+    const showErrorModal = (details) => {
         let formattedDetails = '';
         if (typeof details === 'object' && details !== null) {
             for (const [key, value] of Object.entries(details)) {
@@ -400,471 +285,306 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             formattedDetails = String(details);
         }
-        errorDetails.textContent = formattedDetails.trim();
-        errorModal.classList.remove('hidden');
-    }
-    closeErrorModalBtn.addEventListener('click', () => errorModal.classList.add('hidden'));
+        ui.errorDetails.textContent = formattedDetails.trim();
+        ui.errorModal.classList.remove('hidden');
+    };
 
-    /**
-     * Centralized function for making API requests. Includes enhanced error handling.
-     * @param {string} action - The API action to perform.
-     * @param {object} params - Additional parameters for the action.
-     * @returns {Promise<object>} - The successful response data.
-     * @throws {Error} - Throws on API or network failure.
-     */
+    // --- API Fetch ---
     async function apiFetch(action, params = {}) {
-        document.getElementById('loadingIndicator').classList.remove('hidden');
+        ui.loadingIndicator.classList.remove('hidden');
         const token = localStorage.getItem('authToken');
 
-        // Login action is a special case that doesn't require a token
         if (action !== 'login' && !token) {
             console.error("Auth token not found.");
             logout();
             throw new Error("Auth token not found.");
         }
 
-        const payload = {
-            action: action,
-            token: token,
-            ...params
-        };
+        const payload = { action, token, ...params };
         
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
                 redirect: 'follow',
                 body: JSON.stringify(payload),
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' } // Required for Google Apps Script
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             });
 
-            if (!response.ok) {
-                let errorData = await response.text();
-                try {
-                    // Try parsing as JSON for structured error messages from the backend
-                    errorData = JSON.parse(errorData);
-                } catch (e) { /* Not JSON, use the raw text */ }
-                
-                throw {
-                    message: "HTTP Request Error",
-                    statusCode: response.status,
-                    statusText: response.statusText,
-                    responseBody: errorData
-                };
+            let result;
+            const responseText = await response.text();
+            try {
+                 result = JSON.parse(responseText);
+            } catch (e) {
+                 throw { message: "無效的 JSON 回應", statusCode: response.status, statusText: response.statusText, responseBody: responseText };
             }
-
-            const result = await response.json();
 
             if (result.status === 'error') {
-                 if (result.message === 'Invalid token') {
-                    logout();
-                }
-                throw {
-                    message: "Backend API Error",
-                    apiMessage: result.message,
-                    details: result.details || "N/A"
-                };
+                 if (result.message.includes('token')) logout();
+                 throw { message: "後端 API 錯誤", apiMessage: result.message };
             }
-            return result;
+            
+            if (!response.ok) {
+                throw { message: "HTTP 請求錯誤", statusCode: response.status, statusText: response.statusText, responseBody: result };
+            }
+
+            return result.data;
         } catch (error) {
             console.error(`API Fetch Error for action "${action}":`, error);
-            
             const errorInfo = {
-                "錯誤類型": error.message || "Unknown Network Error",
-                "請求動作": action,
-                "詳細資訊": {}
+                "錯誤類型": error.message || "未知的網路錯誤", "請求動作": action, "詳細資訊": {}
             };
-
-            if (error.statusCode) { // Catches HTTP errors (e.g., 404, 500)
+            if (error.statusCode) {
                 errorInfo["詳細資訊"]["HTTP 狀態碼"] = error.statusCode;
                 errorInfo["詳細資訊"]["HTTP 狀態訊息"] = error.statusText;
                 errorInfo["詳細資訊"]["後端回應"] = error.responseBody;
-            } else if (error.apiMessage) { // Catches structured errors from our backend API
+            } else if (error.apiMessage) {
                  errorInfo["詳細資訊"]["後端錯誤訊息"] = error.apiMessage;
-                 errorInfo["詳細資訊"]["後端詳細資料"] = error.details;
-            } else { // Catches network errors, most likely CORS issues
-                errorInfo["詳細資訊"]["可能原因"] = "無法連接到後端伺服器。這可能是由於網路中斷，或更常見的是，伺服器端的跨來源資源共享 (CORS) 設定不正確所導致。";
-                errorInfo["詳細資訊"]["CORS 除錯指南"] = "請打開瀏覽器的開發人員工具 (按 F12)，並切換到「主控台」(Console) 分頁，尋找有關 CORS 的具體錯誤訊息。請根據錯誤訊息，確認您的 Google Apps Script 已正確部署為 Web App，並允許來自此網站網域的請求。";
+            } else {
+                errorInfo["詳細資訊"]["可能原因"] = "無法連接到後端伺服器，很可能是 CORS 設定問題。";
+                errorInfo["詳細資訊"]["CORS 除錯指南"] = "請按 F12 打開開發者工具，在「主控台」(Console) 中查看詳細錯誤，並確認後端 Apps Script 已正確部署且來源網域已加入白名單。";
                 errorInfo["詳細資訊"]["原始錯誤堆疊"] = error.stack || error.toString();
             }
-
             showErrorModal(errorInfo);
-            throw error; // Re-throw to allow the original calling function to handle UI state if needed
+            throw error;
         } finally {
-            document.getElementById('loadingIndicator').classList.add('hidden');
+            ui.loadingIndicator.classList.add('hidden');
         }
     }
-
 
     // --- Authentication ---
-    function checkLogin() {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            loginScreen.classList.add('hidden');
-            dashboard.classList.remove('hidden');
+    const checkLogin = () => {
+        if (localStorage.getItem('authToken')) {
+            ui.loginScreen.classList.add('hidden');
+            ui.dashboard.classList.remove('hidden');
             navigateTo('mainDashboard');
         } else {
-            loginScreen.classList.remove('hidden');
-            dashboard.classList.add('hidden');
+            ui.loginScreen.classList.remove('hidden');
+            ui.dashboard.classList.add('hidden');
         }
-    }
+    };
 
-    async function login() {
-        const password = passwordInput.value;
-        if (!password) {
-            showToast('請輸入密碼', 'error');
-            return;
-        }
+    const login = async () => {
+        const password = ui.passwordInput.value;
+        if (!password) return showToast('請輸入密碼', 'error');
         try {
-            const data = await apiFetch('login', { password: password });
+            const data = await apiFetch('login', { password });
             localStorage.setItem('authToken', data.token);
             checkLogin();
         } catch (error) {
-            // Error modal is already shown by apiFetch, just clear the input
-            passwordInput.value = '';
+            ui.passwordInput.value = '';
         }
-    }
+    };
 
-    function logout() {
+    const logout = () => {
         localStorage.removeItem('authToken');
         checkLogin();
-    }
-    
-    loginButton.addEventListener('click', login);
-    passwordInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') login();
-    });
-    logoutButton.addEventListener('click', logout);
+    };
 
     // --- Navigation ---
-    function navigateTo(sectionId) {
-        contentSections.forEach(section => section.classList.add('hidden'));
-        sidebarItems.forEach(item => item.classList.remove('active'));
-
+    const navigateTo = (sectionId) => {
+        ui.contentSections.forEach(s => s.classList.add('hidden'));
+        ui.sidebarItems.forEach(i => i.classList.remove('active'));
         document.getElementById(`${sectionId}Section`).classList.remove('hidden');
         document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
 
-        // Fetch data for the new section
-        switch (sectionId) {
-            case 'mainDashboard':
-                fetchDashboardData();
-                break;
-            case 'subscribers':
-                fetchSubscribers();
-                break;
-            case 'announcements':
-                fetchAnnouncements();
-                break;
-            case 'policies':
-                fetchPolicies();
-                break;
-            case 'shops':
-                fetchShops();
-                break;
-        }
-    }
-    
-    sidebarItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            navigateTo(e.currentTarget.dataset.section);
-        });
-    });
+        const fetchActions = {
+            mainDashboard: fetchDashboardData,
+            subscribers: fetchSubscribers,
+            announcements: fetchAnnouncements,
+            policies: fetchPolicies,
+            shops: fetchShops,
+        };
+        fetchActions[sectionId]?.();
+    };
 
-    // --- Dashboard Section ---
-    async function fetchDashboardData() {
+    // --- Data Fetching and Rendering ---
+    const fetchDashboardData = async () => {
         try {
             const data = await apiFetch('getDashboardStats');
             document.getElementById('totalSubscribers').textContent = data.totalSubscribers;
             document.getElementById('totalShops').textContent = data.totalShops;
-        } catch(error) {
-             document.getElementById('totalSubscribers').textContent = '錯誤';
-             document.getElementById('totalShops').textContent = '錯誤';
-        }
-    }
+        } catch(e) { /* Error modal shown by apiFetch */ }
+    };
 
-    // --- Subscribers Section ---
-    async function fetchSubscribers(page = 1, search = '') {
-        subscriberState.currentPage = page;
-        subscriberState.currentSearch = search;
+    const fetchSubscribers = async (page = 1, search = '') => {
+        state.subscriber = { currentPage: page, currentSearch: search };
         try {
             const data = await apiFetch('getSubscribers', { page, search });
-            renderSubscribers(data.subscribers);
-            renderPagination('subscriberPagination', data.pagination, fetchSubscribers, search);
-        } catch (error) {
-            document.getElementById('subscribersTableBody').innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-500">無法載入訂閱者資料。</td></tr>`;
-        }
-    }
-
-    function renderSubscribers(subscribers) {
-        const tableBody = document.getElementById('subscribersTableBody');
-        tableBody.innerHTML = '';
-        if (subscribers.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-500">找不到訂閱者。</td></tr>';
-            return;
-        }
-        subscribers.forEach(sub => {
-            const row = `
-                <tr>
+            renderTable('subscribersTableBody', data.subscribers, 
+                (sub) => `
                     <td class="py-4 px-6 border-b">${sub.email}</td>
                     <td class="py-4 px-6 border-b">${sub.timestamp}</td>
                     <td class="py-4 px-6 border-b">
-                        <button class="text-red-500 hover:text-red-700 delete-subscriber" data-email="${sub.email}">
-                            <i class="fas fa-trash-alt"></i> 刪除
-                        </button>
-                    </td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
-        });
-    }
-
-    async function deleteSubscriber(email) {
-        try {
-            await apiFetch('deleteSubscriber', { email: email });
-            showToast('訂閱者已刪除');
-            fetchSubscribers(subscriberState.currentPage, subscriberState.currentSearch);
-        } catch (error) {
-             // Error modal already shown by apiFetch
-        }
-    }
+                        <button class="text-red-500 hover:text-red-700" data-action="delete-subscriber" data-id="${sub.email}"><i class="fas fa-trash-alt"></i> 刪除</button>
+                    </td>`,
+                '<tr><td colspan="3" class="text-center py-4">找不到訂閱者。</td></tr>'
+            );
+            renderPagination('subscriberPagination', data.pagination, fetchSubscribers, search);
+        } catch (e) { document.getElementById('subscribersTableBody').innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-500">無法載入資料。</td></tr>'; }
+    };
     
-    document.getElementById('subscribersTableBody').addEventListener('click', (e) => {
-        const deleteButton = e.target.closest('.delete-subscriber');
-        if (deleteButton) {
-            const email = deleteButton.dataset.email;
-            showConfirm('刪除訂閱者', `您確定要刪除 ${email} 嗎？此操作無法復原。`, () => {
-                deleteSubscriber(email);
-            });
-        }
-    });
-
-    document.getElementById('subscriberSearch').addEventListener('input', (e) => {
-        fetchSubscribers(1, e.target.value);
-    });
-
-    // --- Announcements Section ---
-    async function fetchAnnouncements() {
+    const fetchAnnouncements = async () => {
         try {
             const data = await apiFetch('getAnnouncements');
             document.getElementById('announcementsEditor').value = data.announcements;
-        } catch (error) {
-            document.getElementById('announcementsEditor').value = '無法載入公告。';
-        }
-    }
+        } catch (e) { /* Error handled */ }
+    };
 
-    async function updateAnnouncements() {
-        const content = document.getElementById('announcementsEditor').value;
-        try {
-            await apiFetch('updateAnnouncements', { content: content });
-            showToast('公告已更新');
-        } catch (error) {
-            // Error modal is already shown
-        }
-    }
-    document.getElementById('saveAnnouncements').addEventListener('click', updateAnnouncements);
-
-    // --- Policies Section ---
-    async function fetchPolicies() {
+    const fetchPolicies = async () => {
         try {
             const data = await apiFetch('getPolicies');
             document.getElementById('privacyPolicy').value = data.privacy || '';
             document.getElementById('disclaimer').value = data.disclaimer || '';
-        } catch (error) {
-            document.getElementById('privacyPolicy').value = '無法載入隱私權政策。';
-            document.getElementById('disclaimer').value = '無法載入免責聲明。';
-        }
-    }
+        } catch (e) { /* Error handled */ }
+    };
 
-    async function updatePolicy(key, value) {
-        try {
-            await apiFetch('updatePolicy', { key: key, value: value });
-            showToast(`${key === 'privacy' ? '隱私權政策' : '免責聲明'}已更新`);
-        } catch(error) {
-            // Error modal is already shown
-        }
-    }
-    document.getElementById('savePrivacyPolicy').addEventListener('click', () => {
-        updatePolicy('privacy', document.getElementById('privacyPolicy').value);
-    });
-    document.getElementById('saveDisclaimer').addEventListener('click', () => {
-        updatePolicy('disclaimer', document.getElementById('disclaimer').value);
-    });
-
-
-    // --- Shops Section ---
-    async function fetchShops(page = 1, search = '') {
-        shopState.currentPage = page;
-        shopState.currentSearch = search;
+    const fetchShops = async (page = 1, search = '') => {
+        state.shop = { currentPage: page, currentSearch: search };
         try {
             const data = await apiFetch('getShops', { page, search });
-            renderShops(data.shops);
-            renderPagination('shopPagination', data.pagination, fetchShops, search);
-        } catch(error) {
-            document.getElementById('shopsTableBody').innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">無法載入店家資料。</td></tr>`;
-        }
-    }
-
-    function renderShops(shops) {
-        const tableBody = document.getElementById('shopsTableBody');
-        tableBody.innerHTML = '';
-        if (shops.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">找不到店家。</td></tr>';
-            return;
-        }
-        shops.forEach(shop => {
-            const row = `
-                <tr>
+            renderTable('shopsTableBody', data.shops, 
+                (shop) => `
                     <td class="py-4 px-6 border-b">${shop['name_zh-TW']}</td>
                     <td class="py-4 px-6 border-b">${shop['type_zh-TW']}</td>
                     <td class="py-4 px-6 border-b">${shop['address_zh-TW']}</td>
                     <td class="py-4 px-6 border-b text-center">
-                        <button class="text-emerald-500 hover:text-emerald-700 mr-3 recommend-shop" data-id="${shop.id}" title="推薦給訂閱者"><i class="fas fa-star"></i></button>
-                        <button class="text-blue-500 hover:text-blue-700 mr-3 edit-shop" data-id="${shop.id}" title="編輯"><i class="fas fa-edit"></i></button>
-                        <button class="text-red-500 hover:text-red-700 delete-shop" data-id="${shop.id}" title="刪除"><i class="fas fa-trash-alt"></i></button>
-                    </td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
-        });
-    }
+                        <button class="text-emerald-500 hover:text-emerald-700 mr-3" data-action="recommend-shop" data-id="${shop.id}" title="推薦"><i class="fas fa-star"></i></button>
+                        <button class="text-blue-500 hover:text-blue-700 mr-3" data-action="edit-shop" data-id="${shop.id}" title="編輯"><i class="fas fa-edit"></i></button>
+                        <button class="text-red-500 hover:text-red-700" data-action="delete-shop" data-id="${shop.id}" title="刪除"><i class="fas fa-trash-alt"></i></button>
+                    </td>`,
+                '<tr><td colspan="4" class="text-center py-4">找不到店家。</td></tr>'
+            );
+            renderPagination('shopPagination', data.pagination, fetchShops, search);
+        } catch (e) { document.getElementById('shopsTableBody').innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">無法載入資料。</td></tr>'; }
+    };
 
-    document.getElementById('shopSearch').addEventListener('input', (e) => {
-        fetchShops(1, e.target.value);
-    });
+    const renderTable = (tbodyId, items, rowRenderer, emptyMessage) => {
+        const tbody = document.getElementById(tbodyId);
+        tbody.innerHTML = items.length > 0 ? items.map(item => `<tr data-id="${item.id || item.email}">${rowRenderer(item)}</tr>`).join('') : emptyMessage;
+    };
 
-    document.getElementById('shopsTableBody').addEventListener('click', (e) => {
-        const target = e.target.closest('button');
-        if (!target) return;
-        
-        const id = target.dataset.id;
-        const shopName = target.closest('tr').cells[0].textContent;
-
-        if (target.classList.contains('edit-shop')) {
-            openShopModal('edit', id);
-        } else if (target.classList.contains('delete-shop')) {
-            showConfirm('刪除店家', `您確定要刪除「${shopName}」嗎？`, () => deleteShop(id));
-        } else if (target.classList.contains('recommend-shop')) {
-            showConfirm('推薦店家', `您確定要將「${shopName}」推薦給所有訂閱者嗎？`, () => recommendShop(id));
-        }
-    });
-
-    async function deleteShop(id) {
-        try {
-            await apiFetch('deleteShop', { id: id });
-            showToast('店家已刪除');
-            fetchShops(shopState.currentPage, shopState.currentSearch);
-        } catch (error) {
-            // Error modal shown
-        }
-    }
-    
-    async function recommendShop(id) {
-        try {
-            const result = await apiFetch('recommendShop', { id: id });
-            showToast(`已成功將店家推薦給 ${result.sentCount} 位訂閱者`);
-        } catch (error) {
-            // Error modal shown
-        }
-    }
-
-    // --- Shop Modal Logic ---
-    const shopForm = document.getElementById('shopForm');
-    const shopModalTitle = document.getElementById('shopModalTitle');
-    const shopIdInput = document.getElementById('shopId');
-
-    document.getElementById('addShopButton').addEventListener('click', () => openShopModal('add'));
-    document.getElementById('cancelShopModal').addEventListener('click', () => shopModal.classList.add('hidden'));
-
-    async function openShopModal(mode, id = null) {
-        shopForm.reset();
-        if (mode === 'add') {
-            shopModalTitle.textContent = '新增店家';
-            shopIdInput.value = '';
-            shopModal.classList.remove('hidden');
-        } else {
-            shopModalTitle.textContent = '編輯店家';
-            try {
-                const data = await apiFetch('getShopById', { id: id });
-                const shop = data.shop;
-                for (const key in shop) {
-                    if (document.getElementById(key)) {
-                        document.getElementById(key).value = shop[key];
-                    }
-                }
-                shopModal.classList.remove('hidden');
-            } catch (error) {
-                // error modal shown
-            }
-        }
-    }
-
-    shopForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const shopData = {};
-        const inputs = shopForm.querySelectorAll('input, textarea');
-        inputs.forEach(input => {
-            if (input.id) {
-                shopData[input.id] = input.value;
-            }
-        });
-
-        try {
-            await apiFetch('saveShop', { shop: shopData });
-            showToast('店家資料已儲存');
-            shopModal.classList.add('hidden');
-            fetchShops(shopState.currentPage, shopState.currentSearch);
-        } catch (error) {
-            // error modal shown
-        }
-    });
-
-    // --- Pagination ---
-    function renderPagination(containerId, pagination, fetchFunction, search) {
+    const renderPagination = (containerId, pagination, fetchFn, search) => {
         const container = document.getElementById(containerId);
-        container.innerHTML = '';
-        if (!pagination || pagination.totalPages <= 1) return;
-
+        if (!pagination || pagination.totalPages <= 1) {
+            container.innerHTML = ''; return;
+        }
         const { currentPage, totalPages } = pagination;
-        let html = '<div class="flex items-center space-x-1">';
-
-        // Previous button
-        html += `<button class="px-3 py-1 rounded-md ${currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">&laquo;</button>`;
-
-        // Page numbers
-        // Logic to show a limited number of pages
-        let startPage = Math.max(1, currentPage - 2);
-        let endPage = Math.min(totalPages, currentPage + 2);
-
-        if (startPage > 1) {
-             html += `<button class="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-50" data-page="1">1</button>`;
-             if (startPage > 2) html += `<span class="px-3 py-1">...</span>`;
+        let buttons = '';
+        for (let i = 1; i <= totalPages; i++) {
+            buttons += `<button class="px-3 py-1 rounded-md ${i === currentPage ? 'bg-emerald-500 text-white' : 'bg-white hover:bg-gray-50'}" data-page="${i}">${i}</button>`;
         }
+        container.innerHTML = `<div class="flex items-center space-x-1">${buttons}</div>`;
+        container.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => fetchFn(parseInt(btn.dataset.page), search)));
+    };
 
-        for (let i = startPage; i <= endPage; i++) {
-            html += `<button class="px-3 py-1 rounded-md ${i === currentPage ? 'bg-emerald-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}" data-page="${i}">${i}</button>`;
-        }
+    // --- Event Handlers ---
+    const setupEventListeners = () => {
+        ui.loginButton.addEventListener('click', login);
+        ui.passwordInput.addEventListener('keypress', (e) => e.key === 'Enter' && login());
+        ui.logoutButton.addEventListener('click', logout);
+        ui.sidebarItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(e.currentTarget.dataset.section); }));
         
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) html += `<span class="px-3 py-1">...</span>`;
-            html += `<button class="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-50" data-page="${totalPages}">${totalPages}</button>`;
-        }
-
-        // Next button
-        html += `<button class="px-3 py-1 rounded-md ${currentPage === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">&raquo;</button>`;
+        ui.cancelModalButton.addEventListener('click', () => ui.confirmModal.classList.add('hidden'));
+        ui.confirmModalButton.addEventListener('click', () => { ui.confirmModal.classList.add('hidden'); state.confirmCallback?.(); });
+        ui.closeErrorModal.addEventListener('click', () => ui.errorModal.classList.add('hidden'));
         
-        html += '</div>';
-        container.innerHTML = html;
-
-        container.querySelectorAll('button').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const page = parseInt(e.currentTarget.dataset.page);
-                fetchFunction(page, search);
+        document.getElementById('subscriberSearch').addEventListener('input', (e) => fetchSubscribers(1, e.target.value));
+        document.getElementById('subscribersTableBody').addEventListener('click', (e) => {
+            const target = e.target.closest('button[data-action="delete-subscriber"]');
+            if (!target) return;
+            const email = target.dataset.id;
+            showConfirm('刪除訂閱者', `確定要刪除 ${email} 嗎？`, async () => {
+                try {
+                    await apiFetch('deleteSubscriber', { email });
+                    showToast('訂閱者已刪除');
+                    fetchSubscribers(state.subscriber.currentPage, state.subscriber.currentSearch);
+                } catch(e) {/* Handled */}
             });
         });
-    }
 
+        document.getElementById('saveAnnouncements').addEventListener('click', async () => {
+            try {
+                await apiFetch('setAnnouncements', { content: document.getElementById('announcementsEditor').value });
+                showToast('公告已更新');
+            } catch(e) {/* Handled */}
+        });
+        document.getElementById('savePrivacyPolicy').addEventListener('click', async () => {
+            try {
+                await apiFetch('setPolicy', { key: 'privacy', value: document.getElementById('privacyPolicy').value });
+                showToast('隱私權政策已更新');
+            } catch(e) {/* Handled */}
+        });
+        document.getElementById('saveDisclaimer').addEventListener('click', async () => {
+             try {
+                await apiFetch('setPolicy', { key: 'disclaimer', value: document.getElementById('disclaimer').value });
+                showToast('免責聲明已更新');
+            } catch(e) {/* Handled */}
+        });
 
-    // --- Initialization ---
+        document.getElementById('shopSearch').addEventListener('input', (e) => fetchShops(1, e.target.value));
+        document.getElementById('shopsTableBody').addEventListener('click', (e) => {
+            const target = e.target.closest('button[data-action]');
+            if (!target) return;
+            const { action, id } = target.dataset;
+            const shopName = target.closest('tr').cells[0].textContent;
+
+            if (action === 'edit-shop') openShopModal('edit', id);
+            else if (action === 'delete-shop') {
+                showConfirm('刪除店家', `確定要刪除「${shopName}」嗎？`, async () => {
+                    try {
+                        await apiFetch('deleteShop', { id });
+                        showToast('店家已刪除');
+                        fetchShops(state.shop.currentPage, state.shop.currentSearch);
+                    } catch(e) {/* Handled */}
+                });
+            } else if (action === 'recommend-shop') {
+                showConfirm('推薦店家', `確定要將「${shopName}」推薦給所有訂閱者？`, async () => {
+                    try {
+                        const data = await apiFetch('sendRecommendation', { shopId: id });
+                        showToast(`已成功推薦給 ${data.sentCount} 位訂閱者`);
+                    } catch(e) {/* Handled */}
+                });
+            }
+        });
+
+        ui.addShopButton.addEventListener('click', () => openShopModal('add'));
+        ui.cancelShopModal.addEventListener('click', () => ui.shopModal.classList.add('hidden'));
+        ui.shopForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const shopData = {};
+            const inputs = ui.shopForm.querySelectorAll('input, textarea');
+            inputs.forEach(input => { if (input.id) shopData[input.id] = input.value; });
+
+            try {
+                await apiFetch('saveShop', { shop: shopData });
+                showToast('店家資料已儲存');
+                ui.shopModal.classList.add('hidden');
+                fetchShops(shopData.id ? state.shop.currentPage : 1, state.shop.currentSearch);
+            } catch (e) {/* Handled */}
+        });
+    };
+    
+    const openShopModal = async (mode, id = null) => {
+        ui.shopForm.reset();
+        document.getElementById('id').value = '';
+        if (mode === 'add') {
+            ui.shopModalTitle.textContent = '新增店家';
+            ui.shopModal.classList.remove('hidden');
+        } else {
+            ui.shopModalTitle.textContent = '編輯店家';
+            try {
+                const data = await apiFetch('getShopById', { id });
+                for (const key in data.shop) {
+                    if (document.getElementById(key)) {
+                        document.getElementById(key).value = data.shop[key];
+                    }
+                }
+                ui.shopModal.classList.remove('hidden');
+            } catch (e) {/* Handled */}
+        }
+    };
+    
+    setupEventListeners();
     checkLogin();
 });
 </script>
