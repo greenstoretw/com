@@ -69,8 +69,9 @@
     <!-- Generic Form Modal -->
     <div id="formModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden z-[1000] flex items-center justify-center p-4">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
-            <div class="p-6 border-b">
+            <div class="p-6 border-b flex justify-between items-center">
                 <h3 id="modalTitle" class="text-xl font-semibold text-gray-800"></h3>
+                <button id="closeModalButtonX" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
             <div id="modalBody" class="p-6 overflow-y-auto modal-content"></div>
             <div class="p-4 bg-gray-50 rounded-b-lg flex justify-end gap-4">
@@ -100,11 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle: document.getElementById('modalTitle'),
         modalBody: document.getElementById('modalBody'),
         closeModalButton: document.getElementById('closeModalButton'),
+        closeModalButtonX: document.getElementById('closeModalButtonX'),
         saveModalButton: document.getElementById('saveModalButton'),
     };
-
-    let currentSection = 'mainDashboard';
-    let currentShopId = null;
 
     const showToast = (message) => {
         ui.toast.textContent = message;
@@ -135,21 +134,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(API_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action, token, ...params }),
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                mode: 'cors'
             });
 
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.indexOf("application/json") !== -1) {
-                const result = await response.json();
-                if (result.status === 'error') {
-                    if (result.message.toLowerCase().includes('token')) logout();
-                    throw new Error(result.message);
+            const text = await response.text();
+            try {
+                const result = JSON.parse(text);
+                 if (result.status === 'error') {
+                    if (result.message && result.message.toLowerCase().includes('token')) logout();
+                    throw new Error(result.message || 'Unknown backend error');
                 }
                 return result.data;
-            } else {
-                const text = await response.text();
-                const err = new Error("後端未回傳有效的JSON格式。");
+            } catch (e) {
+                const err = new Error("無法解碼字串。後端可能回傳了非預期的內容 (例如 HTML 錯誤頁面)。");
                 err.responseText = text;
+                err.stack = e.stack;
                 throw err;
             }
         } catch (error) {
@@ -184,6 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.loginScreen.classList.add('hidden');
             ui.dashboard.classList.remove('hidden');
             navigateTo('mainDashboard');
+        } else {
+             ui.dashboard.classList.add('hidden');
+             ui.loginScreen.classList.remove('hidden');
         }
     };
 
@@ -191,7 +194,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.modalTitle.textContent = title;
         ui.modalBody.innerHTML = bodyHtml;
         ui.formModal.classList.remove('hidden');
-        // Clone and replace the button to remove old event listeners
         const newSaveButton = ui.saveModalButton.cloneNode(true);
         ui.saveModalButton.parentNode.replaceChild(newSaveButton, ui.saveModalButton);
         ui.saveModalButton = newSaveButton;
@@ -201,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModal = () => ui.formModal.classList.add('hidden');
     
     const openShopForm = async (shopId = null) => {
-        currentShopId = shopId;
         const shop = shopId ? (await apiFetch('getShopById', { id: shopId })).shop : {};
         const title = shopId ? '編輯店家' : '新增店家';
         const formHtml = `
@@ -220,7 +221,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div><label class="block">經度 (Lng)</label><input type="text" name="lng" class="w-full border p-2 rounded" value="${shop.lng || ''}"></div>
                 </div>
                 <div><label class="block">簡短描述 (繁中)</label><textarea name="description_zh-TW" class="w-full border p-2 rounded h-24">${shop['description_zh-TW'] || ''}</textarea></div>
+                <div><label class="block">長描述 (繁中)</label><textarea name="longDescription_zh-TW" class="w-full border p-2 rounded h-24">${shop['longDescription_zh-TW'] || ''}</textarea></div>
                 <div><label class="block">簡短描述 (English)</label><textarea name="description_en" class="w-full border p-2 rounded h-24">${shop['description_en'] || ''}</textarea></div>
+                <div><label class="block">長描述 (English)</label><textarea name="longDescription_en" class="w-full border p-2 rounded h-24">${shop['longDescription_en'] || ''}</textarea></div>
             </form>`;
         openModal(title, formHtml, saveShop);
     };
@@ -232,56 +235,39 @@ document.addEventListener('DOMContentLoaded', () => {
         await apiFetch('saveShop', { shop: shopData });
         closeModal();
         showToast('店家已儲存！');
-        navigateTo('shops'); // Refresh the list
+        navigateTo('shops');
     };
     
     const pageRenderers = {
-        mainDashboard: async () => { /* ... (same as before) ... */ },
+        mainDashboard: async () => {
+            const data = await apiFetch('getDashboardStats');
+            return `<h1 class="text-3xl font-bold mb-6">儀表板</h1><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-lg font-medium text-gray-600">總訂閱數</h2><p class="text-4xl font-bold text-emerald-600 mt-2">${data.totalSubscribers}</p></div><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-lg font-medium text-gray-600">總店家數</h2><p class="text-4xl font-bold text-blue-600 mt-2">${data.totalShops}</p></div></div>`;
+        },
         subscribers: async () => {
             const data = await apiFetch('getSubscribers');
-            return `<h1 class="text-3xl font-bold mb-6">訂閱者管理</h1>
-                <div class="bg-white p-6 rounded-lg shadow overflow-x-auto">
-                <table class="min-w-full">
-                    <thead><tr><th class="py-2 px-4 text-left font-semibold">Email</th><th class="py-2 px-4 text-left font-semibold">訂閱時間</th><th class="py-2 px-4 text-left font-semibold">操作</th></tr></thead>
-                    <tbody>${data.subscribers.map(s => `<tr><td class="py-2 px-4 border-b">${s.email}</td><td class="py-2 px-4 border-b">${s.timestamp}</td><td class="py-2 px-4 border-b"><button class="text-red-500 hover:text-red-700" data-action="delete-subscriber" data-email="${s.email}">刪除</button></td></tr>`).join('')}</tbody>
-                </table></div>`;
+            return `<h1 class="text-3xl font-bold mb-6">訂閱者管理</h1><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table class="min-w-full"><thead><tr><th class="py-2 px-4 text-left">Email</th><th class="py-2 px-4 text-left">訂閱時間</th><th class="py-2 px-4 text-left">操作</th></tr></thead><tbody>${data.subscribers.map(s => `<tr><td class="py-2 px-4 border-b">${s.email}</td><td class="py-2 px-4 border-b">${new Date(s.timestamp).toLocaleString()}</td><td class="py-2 px-4 border-b"><button class="text-red-500 hover:text-red-700" data-action="delete-subscriber" data-email="${s.email}">刪除</button></td></tr>`).join('')}</tbody></table></div>`;
         },
-        announcements: async () => { /* ... (same as before) ... */ },
-        policies: async () => { /* ... (same as before) ... */ },
+        announcements: async () => {
+            const data = await apiFetch('getAnnouncements');
+            return `<h1 class="text-3xl font-bold mb-6">公告管理</h1><div class="bg-white p-6 rounded-lg shadow"><label for="announcementsEditor" class="block text-lg font-medium mb-2">公告內容</label><textarea id="announcementsEditor" class="w-full h-48 p-3 border rounded">${data.announcements}</textarea><button id="saveAnnouncements" class="mt-4 px-4 py-2 text-white bg-emerald-600 rounded">儲存</button></div>`;
+        },
+        policies: async () => {
+            const data = await apiFetch('getPolicies');
+            return `<h1 class="text-3xl font-bold mb-6">政策管理</h1><div class="bg-white p-6 rounded-lg shadow space-y-6"><div><label for="privacy" class="block text-lg font-medium mb-2">隱私權政策</label><textarea id="privacy" class="w-full h-48 p-3 border rounded">${data.privacy || ''}</textarea><button data-key="privacy" class="save-policy mt-2 px-4 py-2 text-white bg-emerald-600">儲存</button></div><div><label for="disclaimer" class="block text-lg font-medium mb-2">免責聲明</label><textarea id="disclaimer" class="w-full h-48 p-3 border rounded">${data.disclaimer || ''}</textarea><button data-key="disclaimer" class="save-policy mt-2 px-4 py-2 text-white bg-emerald-600">儲存</button></div></div>`;
+        },
         shops: async () => {
             const data = await apiFetch('getShops');
-            return `<div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">店家管理</h1><button id="add-shop" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">新增店家</button></div>
-                <div class="bg-white p-6 rounded-lg shadow overflow-x-auto">
-                <table class="min-w-full">
-                    <thead><tr><th class="py-2 px-4 text-left font-semibold">店家名稱</th><th class="py-2 px-4 text-left font-semibold">類型</th><th class="py-2 px-4 text-left font-semibold">操作</th></tr></thead>
-                    <tbody>${data.shops.map(s => `<tr><td class="py-2 px-4 border-b">${s['name_zh-TW']}</td><td class="py-2 px-4 border-b">${s['type_zh-TW']}</td><td class="py-2 px-4 border-b space-x-2"><button class="text-blue-500 hover:text-blue-700" data-action="edit-shop" data-id="${s.id}">編輯</button><button class="text-red-500 hover:text-red-700" data-action="delete-shop" data-id="${s.id}">刪除</button><button class="text-purple-500 hover:text-purple-700" data-action="recommend-shop" data-id="${s.id}">推薦</button></td></tr>`).join('')}</tbody>
-                </table></div>`;
+            return `<div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">店家管理</h1><button id="add-shop" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">新增店家</button></div><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table class="min-w-full"><thead><tr><th class="py-2 px-4 text-left">店家名稱</th><th class="py-2 px-4 text-left">類型</th><th class="py-2 px-4 text-left">操作</th></tr></thead><tbody>${data.shops.map(s => `<tr><td class="py-2 px-4 border-b">${s['name_zh-TW']}</td><td class="py-2 px-4 border-b">${s['type_zh-TW']}</td><td class="py-2 px-4 border-b space-x-2"><button class="text-blue-500" data-action="edit-shop" data-id="${s.id}">編輯</button><button class="text-red-500" data-action="delete-shop" data-id="${s.id}">刪除</button><button class="text-purple-500" data-action="recommend-shop" data-id="${s.id}">推薦</button></td></tr>`).join('')}</tbody></table></div>`;
         }
     };
-    
-    // Fill in missing renderers to avoid errors
-    pageRenderers.mainDashboard = async () => {
-        const data = await apiFetch('getDashboardStats');
-        return `<h1 class="text-3xl font-bold mb-6">儀表板</h1><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-lg font-medium text-gray-600">總訂閱數</h2><p class="text-4xl font-bold text-emerald-600 mt-2">${data.totalSubscribers}</p></div><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-lg font-medium text-gray-600">總店家數</h2><p class="text-4xl font-bold text-blue-600 mt-2">${data.totalShops}</p></div></div>`;
-    };
-     pageRenderers.announcements = async () => {
-        const data = await apiFetch('getAnnouncements');
-        return `<h1 class="text-3xl font-bold mb-6">公告管理</h1><div class="bg-white p-6 rounded-lg shadow"><label for="announcementsEditor" class="block text-lg font-medium mb-2">公告內容</label><textarea id="announcementsEditor" class="w-full h-48 p-3 border rounded">${data.announcements}</textarea><button id="saveAnnouncements" class="mt-4 px-4 py-2 text-white bg-emerald-600 rounded">儲存</button></div>`;
-    };
-    pageRenderers.policies = async () => {
-        const data = await apiFetch('getPolicies');
-        return `<h1 class="text-3xl font-bold mb-6">政策管理</h1><div class="bg-white p-6 rounded-lg shadow space-y-6"><div><label for="privacy" class="block text-lg font-medium mb-2">隱私權政策</label><textarea id="privacy" class="w-full h-48 p-3 border rounded">${data.privacy || ''}</textarea><button data-key="privacy" class="save-policy mt-2 px-4 py-2 text-white bg-emerald-600">儲存</button></div><div><label for="disclaimer" class="block text-lg font-medium mb-2">免責聲明</label><textarea id="disclaimer" class="w-full h-48 p-3 border rounded">${data.disclaimer || ''}</textarea><button data-key="disclaimer" class="save-policy mt-2 px-4 py-2 text-white bg-emerald-600">儲存</button></div></div>`;
-    };
-
 
     const navigateTo = async (sectionId) => {
-        currentSection = sectionId;
         ui.sidebarItems.forEach(i => i.classList.remove('active'));
         document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
         try {
             ui.mainContent.innerHTML = await pageRenderers[sectionId]();
         } catch(e) {
-            ui.mainContent.innerHTML = `<div class="text-red-500 p-4 bg-red-100 rounded">無法載入。</div>`;
+            ui.mainContent.innerHTML = `<div class="text-red-500 p-4 bg-red-100 rounded">無法載入。請檢查錯誤彈窗以獲取詳細資訊。</div>`;
         }
     };
     
@@ -290,43 +276,45 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.logoutButton.addEventListener('click', logout);
         ui.closeErrorModal.addEventListener('click', () => ui.errorModal.classList.add('hidden'));
         ui.closeModalButton.addEventListener('click', closeModal);
+        ui.closeModalButtonX.addEventListener('click', closeModal);
 
         ui.sidebarItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(e.currentTarget.dataset.section); }));
         
         ui.mainContent.addEventListener('click', async (e) => {
-            const action = e.target.dataset.action;
-            const id = e.target.dataset.id;
-            const email = e.target.dataset.email;
+            const target = e.target;
+            const action = target.dataset.action;
+            const id = target.dataset.id;
+            const email = target.dataset.email;
 
-            if (e.target.id === 'add-shop') { openShopForm(); }
-            if (action === 'edit-shop') { openShopForm(id); }
-            if (action === 'delete-shop' && confirm(`確定要刪除此店家嗎？`)) {
-                await apiFetch('deleteShop', { id });
-                showToast('店家已刪除');
-                navigateTo('shops');
-            }
-            if (action === 'delete-subscriber' && confirm(`確定要刪除此訂閱者嗎？`)) {
-                await apiFetch('deleteSubscriber', { email });
-                showToast('訂閱者已刪除');
-                navigateTo('subscribers');
-            }
-             if (action === 'recommend-shop' && confirm(`確定要向所有訂閱者推薦此店家嗎？`)) {
-                await apiFetch('sendRecommendation', { shopId: id });
-                showToast('推薦信已開始發送');
-            }
-
-            // Save handlers for non-modal forms
-            if (e.target.id === 'saveAnnouncements') {
-                const content = document.getElementById('announcementsEditor').value;
-                await apiFetch('setAnnouncements', { payload: { content } });
-                showToast('公告已儲存');
-            }
-            if (e.target.classList.contains('save-policy')) {
-                const key = e.target.dataset.key;
-                const value = document.getElementById(key).value;
-                await apiFetch('setPolicy', { payload: { key, value } });
-                showToast('政策已儲存');
-            }
+            try {
+                if (target.id === 'add-shop') { openShopForm(); }
+                if (action === 'edit-shop') { openShopForm(id); }
+                if (action === 'delete-shop' && confirm(`確定要刪除此店家嗎？`)) {
+                    await apiFetch('deleteShop', { id });
+                    showToast('店家已刪除');
+                    navigateTo('shops');
+                }
+                if (action === 'delete-subscriber' && confirm(`確定要刪除此訂閱者嗎？`)) {
+                    await apiFetch('deleteSubscriber', { email });
+                    showToast('訂閱者已刪除');
+                    navigateTo('subscribers');
+                }
+                if (action === 'recommend-shop' && confirm(`確定要向所有訂閱者推薦此店家嗎？`)) {
+                    await apiFetch('sendRecommendation', { shopId: id });
+                    showToast('推薦信已開始發送');
+                }
+                if (target.id === 'saveAnnouncements') {
+                    const content = document.getElementById('announcementsEditor').value;
+                    await apiFetch('setAnnouncements', { payload: { content } });
+                    showToast('公告已儲存');
+                }
+                if (target.classList.contains('save-policy')) {
+                    const key = target.dataset.key;
+                    const value = document.getElementById(key).value;
+                    await apiFetch('setPolicy', { payload: { key, value } });
+                    showToast('政策已儲存');
+                }
+            } catch(error) { /* Handled by apiFetch */ }
         });
     };
 
