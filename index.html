@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const result = JSON.parse(text);
                 if (result.status === 'error') {
-                    if (result.message && result.message.toLowerCase().includes('token')) logout();
+                    if (result.message && (result.message.includes('Token') || result.message.includes('無效'))) logout();
                     throw new Error(result.message || 'Unknown backend error');
                 }
                 return result.data;
@@ -144,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 navigateTo('mainDashboard');
             }
         } catch (error) { 
-            alert(`登入失敗: ${error.message}`);
             document.getElementById('password').value = ''; 
         }
     };
@@ -236,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = async (event) => {
                 const csv = event.target.result;
                 try {
-                    const lines = csv.split(/\\r\\n|\\n/).filter(line => line.trim() !== '');
+                    const lines = csv.split(/\r\n|\n/).filter(line => line.trim() !== '');
                     if (lines.length < 2) throw new Error("CSV 檔案至少需要一個標頭行和一行資料。");
                     const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
                     const shops = lines.slice(1).map(line => {
@@ -321,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const action = target.dataset.action;
         const id = target.dataset.id;
         try {
-            if (target.id === 'add-tag') openTagForm();
+            if (action === 'add-tag') openTagForm();
             else if (action === 'edit-tag') openTagForm(id);
             else if (action === 'delete-tag' && confirm('確定要刪除此標籤嗎？')) { await apiFetch('deleteTag', { tagId: id }); navigateTo('tags'); }
             
