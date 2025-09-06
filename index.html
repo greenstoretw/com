@@ -7,24 +7,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
         .sidebar-item { transition: all 0.2s ease-in-out; }
         .sidebar-item:hover, .sidebar-item.active { background-color: #10B981; color: white; transform: translateX(4px); }
-        .modal-content { max-height: 85vh; }
         .spinner { border-top-color: #3498db; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        [data-tab-content] { display: none; }
-        [data-tab-content].active { display: block; }
+        .modal-content { max-height: 85vh; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
     <div id="app">
         <!-- Login Screen -->
-        <div id="loginScreen" class="flex items-center justify-center min-h-screen">
+        <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gray-200">
             <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-                <h2 class="text-2xl font-bold text-center">後台管理登入</h2>
+                <h2 class="text-2xl font-bold text-center text-gray-800">後台管理登入</h2>
                 <form id="loginForm">
-                    <input type="password" id="password" class="w-full px-3 py-2 mt-1 border rounded-md" placeholder="請輸入密碼" required>
-                    <button type="submit" class="w-full mt-4 px-4 py-2 font-semibold text-white bg-emerald-600 rounded-md">登入</button>
+                    <div>
+                        <label for="password" class="text-sm font-medium text-gray-700">密碼</label>
+                        <input type="password" id="password" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500" placeholder="請輸入密碼" required>
+                    </div>
+                    <button type="submit" id="loginButton" class="w-full px-4 py-2 font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2">登入</button>
                 </form>
             </div>
         </div>
@@ -37,41 +42,49 @@
                     <div class="px-8 py-6 text-2xl font-bold">管理系統</div>
                     <nav class="flex-1 px-4 py-4 space-y-2">
                         <a href="#" data-section="mainDashboard" class="sidebar-item active flex items-center px-4 py-2 rounded-md"><i class="fas fa-tachometer-alt w-6"></i>儀表板</a>
-                        <a href="#" data-section="shops" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-store w-6"></i>店家管理</a>
-                        <a href="#" data-section="tags" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-tags w-6"></i>標籤管理</a>
                         <a href="#" data-section="subscribers" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-users w-6"></i>訂閱者管理</a>
                         <a href="#" data-section="announcements" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-bullhorn w-6"></i>公告管理</a>
                         <a href="#" data-section="policies" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-file-alt w-6"></i>政策管理</a>
+                        <a href="#" data-section="shops" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-store w-6"></i>店家管理</a>
                     </nav>
-                    <button id="logoutButton" class="w-full mt-auto px-4 py-3 text-left text-white bg-red-600 hover:bg-red-700"><i class="fas fa-sign-out-alt mr-2"></i>登出</button>
+                    <div class="px-4 py-4"><button id="logoutButton" class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"><i class="fas fa-sign-out-alt mr-2"></i>登出</button></div>
                 </div>
+
+                <!-- Main Content -->
                 <main class="flex-1 p-8 overflow-y-auto" id="mainContent"></main>
             </div>
         </div>
     </div>
     
+    <!-- Modals and Indicators -->
     <div id="loadingIndicator" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-25"><div class="spinner h-16 w-16 border-4 border-gray-300 rounded-full"></div></div>
+    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden"></div>
     <div id="errorModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden z-[1001] flex items-center justify-center p-4">
         <div class="relative mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-             <h3 class="text-lg leading-6 font-medium text-red-700 text-center mb-4">發生錯誤</h3>
+            <h3 class="text-lg leading-6 font-medium text-red-700 text-center mb-4">發生錯誤</h3>
             <div class="bg-red-50 p-4 rounded-md max-h-80 overflow-y-auto"><pre id="errorDetails" class="text-xs text-left text-gray-800 whitespace-pre-wrap break-all"></pre></div>
-            <div class="mt-4 text-center"><button id="closeErrorModal" class="px-6 py-2 bg-red-600 text-white rounded-md">關閉</button></div>
+            <div class="mt-4 text-center"><button id="closeErrorModal" class="px-6 py-2 bg-red-600 text-white text-base font-medium rounded-md">關閉</button></div>
         </div>
     </div>
+    <!-- Generic Form Modal -->
     <div id="formModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden z-[1000] flex items-center justify-center p-4">
-         <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
-            <div class="p-6 border-b flex justify-between items-center"><h3 id="modalTitle" class="text-xl font-semibold"></h3><button id="closeModalButtonX" class="text-2xl">&times;</button></div>
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 id="modalTitle" class="text-xl font-semibold text-gray-800"></h3>
+                <button id="closeModalButtonX" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
             <div id="modalBody" class="p-6 overflow-y-auto modal-content"></div>
-            <div class="p-4 bg-gray-50 flex justify-end gap-4"><button id="closeModalButton" class="px-4 py-2 bg-gray-200 rounded-md">取消</button><button id="saveModalButton" class="px-4 py-2 bg-emerald-600 text-white rounded-md">儲存</button></div>
+            <div class="p-4 bg-gray-50 rounded-b-lg flex justify-end gap-4">
+                <button id="closeModalButton" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">取消</button>
+                <button id="saveModalButton" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">儲存</button>
+            </div>
         </div>
     </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwgQoUrk2fspuJTc0aPJHzJe_xHhIB9s50qcJQj5xLC4wujhhqW2TBG2Q07hIjcHEMqEg/exec';
-    const LANGUAGES = ['zh-TW', 'en', 'fr', 'de', 'es', 'ja', 'la'];
-    let allTags = [];
-    
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyJ76tpxJ2eeRRqcv3qUqx3Z8nWLqrNsAIxgMR5vnkfmJOXulhhu1Av2T9w4AzDLg83gA/exec';
+
     const ui = {
         loginScreen: document.getElementById('loginScreen'),
         dashboard: document.getElementById('dashboard'),
@@ -80,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarItems: document.querySelectorAll('.sidebar-item'),
         mainContent: document.getElementById('mainContent'),
         loadingIndicator: document.getElementById('loadingIndicator'),
+        toast: document.getElementById('toast'),
         errorModal: document.getElementById('errorModal'),
         errorDetails: document.getElementById('errorDetails'),
         closeErrorModal: document.getElementById('closeErrorModal'),
@@ -91,15 +105,24 @@ document.addEventListener('DOMContentLoaded', () => {
         saveModalButton: document.getElementById('saveModalButton'),
     };
 
+    const showToast = (message) => {
+        ui.toast.textContent = message;
+        ui.toast.classList.remove('hidden');
+        setTimeout(() => ui.toast.classList.add('hidden'), 3000);
+    };
+
     const showErrorModal = (error) => {
-        let details = `錯誤類型: ${error.name || '未知錯誤'}\n錯誤訊息: ${error.message}\n\n`;
-        if (error.responseText) { details += `後端原始回應:\n------------------------------------\n${error.responseText}\n------------------------------------\n\n`; }
+        let details = `錯誤類型: ${error.name || '未知錯誤'}\n`;
+        details += `錯誤訊息: ${error.message}\n\n`;
+        if (error.responseText) {
+            details += `後端原始回應 (可能是HTML錯誤頁):\n------------------------------------\n${error.responseText}\n------------------------------------\n\n`;
+        }
         if (error.stack) { details += `堆疊追蹤:\n${error.stack}`; }
         ui.errorDetails.textContent = details;
         ui.errorModal.classList.remove('hidden');
     };
 
-    async function apiFetch(action, payload = {}) {
+    async function apiFetch(action, params = {}) {
         ui.loadingIndicator.classList.remove('hidden');
         try {
             const token = localStorage.getItem('authToken');
@@ -107,21 +130,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 logout();
                 throw new Error("Auth token not found. Please log in again.");
             }
+            
             const response = await fetch(API_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action, token, ...payload }),
+                body: JSON.stringify({ action, token, ...params }),
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                mode: 'cors'
             });
+
             const text = await response.text();
             try {
                 const result = JSON.parse(text);
-                if (result.status === 'error') {
+                 if (result.status === 'error') {
                     if (result.message && result.message.toLowerCase().includes('token')) logout();
                     throw new Error(result.message || 'Unknown backend error');
                 }
                 return result.data;
             } catch (e) {
-                const err = new Error("無法解碼 JSON。後端可能回傳了非預期的內容 (例如 HTML 錯誤頁面)。");
+                const err = new Error("無法解碼字串。後端可能回傳了非預期的內容 (例如 HTML 錯誤頁面)。");
                 err.responseText = text;
                 err.stack = e.stack;
                 throw err;
@@ -136,33 +162,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const login = async (password) => {
         try {
-            const data = await apiFetch('login', { password });
+            const data = await apiFetch('login', { payload: { password } });
             if (data && data.token) {
                 localStorage.setItem('authToken', data.token);
                 ui.loginScreen.classList.add('hidden');
                 ui.dashboard.classList.remove('hidden');
                 navigateTo('mainDashboard');
             }
-        } catch (error) { 
-            alert(`登入失敗: ${error.message}`);
-            document.getElementById('password').value = ''; 
-        }
+        } catch (error) { document.getElementById('password').value = ''; }
     };
 
     const logout = () => {
         localStorage.removeItem('authToken');
         ui.dashboard.classList.add('hidden');
         ui.loginScreen.classList.remove('hidden');
+        ui.mainContent.innerHTML = '';
     };
-    
+
     const checkLogin = () => {
         if (localStorage.getItem('authToken')) {
             ui.loginScreen.classList.add('hidden');
             ui.dashboard.classList.remove('hidden');
             navigateTo('mainDashboard');
+        } else {
+             ui.dashboard.classList.add('hidden');
+             ui.loginScreen.classList.remove('hidden');
         }
     };
-    
+
     const openModal = (title, bodyHtml, saveHandler) => {
         ui.modalTitle.textContent = title;
         ui.modalBody.innerHTML = bodyHtml;
@@ -171,139 +198,141 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.saveModalButton.parentNode.replaceChild(newSaveButton, ui.saveModalButton);
         ui.saveModalButton = newSaveButton;
         if(saveHandler) {
-            ui.saveModalButton.style.display = '';
+            ui.saveModalButton.style.display = 'inline-flex';
             ui.saveModalButton.onclick = saveHandler;
         } else {
             ui.saveModalButton.style.display = 'none';
         }
     };
-    const closeModal = () => ui.formModal.classList.add('hidden');
 
-    const createLangTabs = (langs, activeLang = 'zh-TW') => {
-        return langs.map(lang => `<button type="button" class="px-4 py-2 text-sm font-medium rounded-t-lg data-[active=true]:bg-gray-100 data-[active=true]:font-semibold" data-lang="${lang}" data-active="${lang === activeLang}">${lang}</button>`).join('');
-    };
-    
-    const activateTabLogic = (containerSelector) => {
-        const container = document.querySelector(containerSelector);
-        if (!container) return;
-        container.addEventListener('click', e => {
-            if (e.target.matches('[data-lang]')) {
-                const lang = e.target.dataset.lang;
-                container.querySelectorAll('[data-lang]').forEach(b => b.dataset.active = 'false');
-                e.target.dataset.active = 'true';
-                const contentContainer = e.target.closest('form, div').querySelector('.tab-content-container');
-                if (contentContainer) {
-                    contentContainer.querySelectorAll('[data-tab-content]').forEach(el => el.classList.remove('active'));
-                    const targetContent = contentContainer.querySelector(`[data-tab-content="${lang}"]`);
-                    if(targetContent) targetContent.classList.add('active');
-                }
-            }
-        });
-    };
+    const closeModal = () => ui.formModal.classList.add('hidden');
     
     const openShopForm = async (shopId = null) => {
-        const [shopData, tagsData] = await Promise.all([
-            shopId ? apiFetch('getShopById', { id: shopId }) : Promise.resolve({ shop: {} }),
-            apiFetch('getTags')
-        ]);
-        const shop = shopData.shop || {};
-        allTags = tagsData.tags || [];
-        const shopTagIds = new Set((shop.tags || []).map(t => t.id));
+        const shop = shopId ? (await apiFetch('getShopById', { id: shopId })).shop : {};
         const title = shopId ? '編輯店家' : '新增店家';
-        const fields = { name: '名稱', description: '簡短描述', longDescription: '詳細描述', address: '地址', type: '類型(舊)' };
-        const langTabs = createLangTabs(LANGUAGES);
-        const langFields = LANGUAGES.map(lang => `<div data-tab-content="${lang}" class="space-y-4 ${lang === 'zh-TW' ? 'active' : ''}">${Object.entries(fields).map(([key, label]) => `<div><label class="block text-sm font-medium text-gray-700">${label}_${lang}</label><input type="text" name="${key}_${lang}" class="w-full border p-2 rounded mt-1" value="${shop[`${key}_${lang}`] || ''}"></div>`).join('')}</div>`).join('');
-        const tagsCheckboxes = allTags.length > 0 ? allTags.map(tag => `<label class="flex items-center space-x-2 p-2 rounded hover:bg-gray-50"><input type="checkbox" name="tags" value="${tag.id}" ${shopTagIds.has(String(tag.id)) ? 'checked' : ''}><span>${tag['name_zh-TW']} (${tag['name_en']})</span></label>`).join('') : '<p class="text-gray-500">沒有可用的標籤。</p>';
-        const formHtml = `<form id="shopForm" class="space-y-6"><input type="hidden" name="id" value="${shop.id || ''}"><div class="border-b border-gray-200" data-tab-container><nav class="flex -mb-px">${langTabs}</nav></div><div class="p-1 tab-content-container">${langFields}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium">電話</label><input type="text" name="phone" class="w-full border p-2 rounded mt-1" value="${shop.phone || ''}"></div><div><label class="block text-sm font-medium">網站</label><input type="text" name="website" class="w-full border p-2 rounded mt-1" value="${shop.website || ''}"></div><div><label class="block text-sm font-medium">緯度 (Lat)</label><input type="text" name="lat" class="w-full border p-2 rounded mt-1" value="${shop.lat || ''}"></div><div><label class="block text-sm font-medium">經度 (Lng)</label><input type="text" name="lng" class="w-full border p-2 rounded mt-1" value="${shop.lng || ''}"></div></div><div><h4 class="font-semibold mb-2">標籤</h4><div class="grid grid-cols-2 md:grid-cols-4 gap-2 p-4 border rounded-md max-h-48 overflow-y-auto">${tagsCheckboxes}</div></div></form>`;
-        openModal(title, formHtml, async () => {
-            const form = document.getElementById('shopForm');
-            const formData = new FormData(form);
-            const shopData = Object.fromEntries(formData.entries());
-            shopData.tags = formData.getAll('tags');
-            await apiFetch('saveShop', { shop: shopData });
-            closeModal(); navigateTo('shops');
-        });
-        activateTabLogic('#formModal [data-tab-container]');
+        const formHtml = `
+            <form id="shopForm" class="space-y-4">
+                <input type="hidden" name="id" value="${shop.id || ''}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="block">名稱 (繁中)</label><input type="text" name="name_zh-TW" class="w-full border p-2 rounded" value="${shop['name_zh-TW'] || ''}" required></div>
+                    <div><label class="block">名稱 (English)</label><input type="text" name="name_en" class="w-full border p-2 rounded" value="${shop['name_en'] || ''}"></div>
+                    <div><label class="block">類型 (繁中)</label><input type="text" name="type_zh-TW" class="w-full border p-2 rounded" value="${shop['type_zh-TW'] || ''}"></div>
+                    <div><label class="block">類型 (English)</label><input type="text" name="type_en" class="w-full border p-2 rounded" value="${shop['type_en'] || ''}"></div>
+                    <div><label class="block">地址 (繁中)</label><input type="text" name="address_zh-TW" class="w-full border p-2 rounded" value="${shop['address_zh-TW'] || ''}"></div>
+                    <div><label class="block">地址 (English)</label><input type="text" name="address_en" class="w-full border p-2 rounded" value="${shop['address_en'] || ''}"></div>
+                    <div><label class="block">電話</label><input type="text" name="phone" class="w-full border p-2 rounded" value="${shop.phone || ''}"></div>
+                    <div><label class="block">網站</label><input type="text" name="website" class="w-full border p-2 rounded" value="${shop.website || ''}"></div>
+                    <div><label class="block">緯度 (Lat)</label><input type="text" name="lat" class="w-full border p-2 rounded" value="${shop.lat || ''}"></div>
+                    <div><label class="block">經度 (Lng)</label><input type="text" name="lng" class="w-full border p-2 rounded" value="${shop.lng || ''}"></div>
+                </div>
+                <div><label class="block">簡短描述 (繁中)</label><textarea name="description_zh-TW" class="w-full border p-2 rounded h-24">${shop['description_zh-TW'] || ''}</textarea></div>
+                <div><label class="block">長描述 (繁中)</label><textarea name="longDescription_zh-TW" class="w-full border p-2 rounded h-24">${shop['longDescription_zh-TW'] || ''}</textarea></div>
+                <div><label class="block">簡短描述 (English)</label><textarea name="description_en" class="w-full border p-2 rounded h-24">${shop['description_en'] || ''}</textarea></div>
+                <div><label class="block">長描述 (English)</label><textarea name="longDescription_en" class="w-full border p-2 rounded h-24">${shop['longDescription_en'] || ''}</textarea></div>
+            </form>`;
+        openModal(title, formHtml, saveShop);
     };
+    
     const openBatchUploadModal = () => {
-        const title = '批次上傳店家 (CSV)';
-        const bodyHtml = `<div class="space-y-4"><div><label for="csvFile" class="block text-sm font-medium text-gray-700">選擇 CSV 檔案</label><input type="file" id="csvFile" name="csvFile" accept=".csv" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"/></div><div><h4 class="font-semibold">CSV 格式說明：</h4><p class="text-sm text-gray-600">第一行必須是欄位標頭。ID 欄位請留空，系統會自動生成。以下為必要及建議欄位：</p><ul class="list-disc list-inside text-sm text-gray-500 mt-2 bg-gray-50 p-3 rounded"><li><b>必要欄位:</b> name_zh-TW, lat, lng</li><li><b>建議欄位:</b> name_en, address_zh-TW, description_zh-TW, tags</li><li><b>標籤 (tags):</b> 請填入標籤的 ID，多個標籤請用逗號 (,) 分隔。</li></ul></div></div>`;
-        openModal(title, bodyHtml, async () => {
-            const fileInput = document.getElementById('csvFile');
-            if (!fileInput.files.length) { alert('請選擇一個檔案'); return; }
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const csv = event.target.result;
-                try {
-                    const lines = csv.split(/\\r\\n|\\n/).filter(line => line.trim() !== '');
-                    if (lines.length < 2) throw new Error("CSV 檔案至少需要一個標頭行和一行資料。");
-                    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-                    const shops = lines.slice(1).map(line => {
-                        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-                        return headers.reduce((obj, header, i) => { obj[header] = values[i]; return obj; }, {});
-                    });
-                    const result = await apiFetch('batchUploadShops', { shops });
-                    alert(result.message);
-                    closeModal();
-                    navigateTo('shops');
-                } catch (error) { alert(`處理 CSV 失敗: ${error.message}`); }
-            };
-            reader.readAsText(file);
-        });
+        const title = '批次上傳店家';
+        const bodyHtml = `
+            <div class="space-y-4">
+                <div>
+                    <label for="csvFile" class="block mb-2 text-sm font-medium text-gray-900">上傳 CSV 檔案</label>
+                    <input type="file" id="csvFile" accept=".csv" class="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none">
+                </div>
+                <div class="p-4 bg-gray-100 rounded-lg">
+                    <h4 class="font-semibold mb-2">CSV 格式說明：</h4>
+                    <p class="text-sm text-gray-700">請確保您的 CSV 檔案包含以下欄位標頭，且順序一致。</p>
+                    <code class="block bg-gray-200 p-2 rounded mt-2 text-xs overflow-x-auto">id,name_zh-TW,name_en,type_zh-TW,type_en,address_zh-TW,address_en,phone,website,lat,lng,description_zh-TW,longDescription_zh-TW,description_en,longDescription_en</code>
+                    <p class="text-sm text-gray-700 mt-2"><b>注意:</b> 'id' 欄位若為空，系統將自動生成。</p>
+                </div>
+                <div id="uploadResult" class="hidden mt-4 p-4 rounded-md"></div>
+            </div>`;
+        openModal(title, bodyHtml, handleBatchUpload);
     };
-    const openTagForm = (tagId = null) => {
-        const tag = tagId ? allTags.find(t => String(t.id) === String(tagId)) : {};
-        const title = tagId ? '編輯標籤' : '新增標籤';
-        const formFields = LANGUAGES.map(lang => `<div><label class="block text-sm font-medium">名稱 (${lang})</label><input type="text" name="name_${lang}" class="w-full border p-2 rounded mt-1" value="${(tag && tag[`name_${lang}`]) || ''}" required></div>`).join('<div class="md:col-span-2"><hr></div>');
-        const formHtml = `<form id="tagForm" class="grid grid-cols-1 md:grid-cols-2 gap-4"><input type="hidden" name="id" value="${(tag && tag.id) || ''}">${formFields}</form>`;
-        openModal(title, formHtml, async () => {
-            const form = document.getElementById('tagForm');
-            const formData = new FormData(form);
-            await apiFetch('saveTag', { tag: Object.fromEntries(formData.entries()) });
-            closeModal(); navigateTo('tags');
-        });
+    
+    const handleBatchUpload = () => {
+        const fileInput = document.getElementById('csvFile');
+        const file = fileInput.files[0];
+        if (!file) {
+            alert('請選擇一個 CSV 檔案');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const text = event.target.result;
+            // Simple CSV to JSON parser
+            const lines = text.split(/\r\n|\n/);
+            const headers = lines[0].split(',').map(h => h.trim());
+            const shops = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i]) continue;
+                const data = lines[i].split(',');
+                const shop = {};
+                for (let j = 0; j < headers.length; j++) {
+                    shop[headers[j]] = data[j] ? data[j].trim() : '';
+                }
+                shops.push(shop);
+            }
+
+            try {
+                const result = await apiFetch('batchUploadShops', { shops });
+                const resultDiv = document.getElementById('uploadResult');
+                resultDiv.textContent = result.message;
+                resultDiv.className = 'p-4 rounded-md bg-green-100 text-green-800';
+                resultDiv.classList.remove('hidden');
+                navigateTo('shops');
+            } catch (e) {
+                 const resultDiv = document.getElementById('uploadResult');
+                resultDiv.textContent = `上傳失敗: ${e.message}`;
+                resultDiv.className = 'p-4 rounded-md bg-red-100 text-red-800';
+                resultDiv.classList.remove('hidden');
+            }
+        };
+        reader.readAsText(file);
     };
 
+
+    const saveShop = async () => {
+        const form = document.getElementById('shopForm');
+        const formData = new FormData(form);
+        const shopData = Object.fromEntries(formData.entries());
+        await apiFetch('saveShop', { shop: shopData });
+        closeModal();
+        showToast('店家已儲存！');
+        navigateTo('shops');
+    };
+    
     const pageRenderers = {
         mainDashboard: async () => {
             const data = await apiFetch('getDashboardStats');
-            return `<h1 class="text-3xl font-bold mb-6">儀表板</h1><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-gray-600">總店家數</h2><p class="text-3xl font-bold">${data.totalShops}</p></div><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-gray-600">總標籤數</h2><p class="text-3xl font-bold">${data.totalTags}</p></div><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-gray-600">總訂閱數</h2><p class="text-3xl font-bold">${data.totalSubscribers}</p></div><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-gray-600">問題回報數</h2><p class="text-3xl font-bold">${data.totalFeedback}</p></div></div>`;
-        },
-        shops: async () => {
-            const data = await apiFetch('getShops');
-            const shopsHtml = data.shops.map(s => `<tr><td class="py-2 px-4 border-b">${s['name_zh-TW']}</td><td class="py-2 px-4 border-b">${(s.tags || []).map(t => t['name_zh-TW']).join(', ')}</td><td class="py-2 px-4 border-b space-x-2"><button data-action="edit-shop" data-id="${s.id}" class="text-emerald-600">編輯</button><button data-action="recommend-shop" data-id="${s.id}" class="text-sky-600">推薦</button><button data-action="delete-shop" data-id="${s.id}" class="text-red-500">刪除</button></td></tr>`).join('');
-            return `<div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">店家管理</h1><div class="space-x-2"><button data-action="add-shop" class="px-4 py-2 bg-emerald-600 text-white rounded-md">新增店家</button><button data-action="batch-upload-shops" class="px-4 py-2 bg-sky-600 text-white rounded-md">批次上傳</button></div></div><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table><thead><tr><th>店家名稱</th><th>標籤</th><th>操作</th></tr></thead><tbody>${shopsHtml.length ? shopsHtml : `<tr><td colspan="3" class="text-center p-4">沒有店家資料</td></tr>`}</tbody></table></div>`;
-        },
-        tags: async () => {
-            const data = await apiFetch('getTags'); allTags = data.tags || [];
-            const tagsHtml = allTags.map(tag => `<tr><td class="py-2 px-4 border-b">${tag['name_zh-TW']}</td><td class="py-2 px-4 border-b">${tag['name_en']}</td><td class="py-2 px-4 border-b space-x-2"><button data-action="edit-tag" data-id="${tag.id}" class="text-emerald-600">編輯</button><button data-action="delete-tag" data-id="${tag.id}" class="text-red-500">刪除</button></td></tr>`).join('');
-            return `<div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">標籤管理</h1><button data-action="add-tag" class="px-4 py-2 bg-emerald-600 text-white rounded-md">新增標籤</button></div><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table><thead><tr><th>名稱 (繁中)</th><th>名稱 (English)</th><th>操作</th></tr></thead><tbody>${tagsHtml.length ? tagsHtml : `<tr><td colspan="3" class="text-center p-4">沒有標籤資料</td></tr>`}</tbody></table></div>`;
+            return `
+                <h1 class="text-3xl font-bold mb-6">儀表板</h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="p-6 bg-white rounded-lg shadow flex items-center"><i class="fas fa-store text-4xl text-blue-500 mr-4"></i><div><h2 class="text-lg font-medium text-gray-600">總店家數</h2><p class="text-3xl font-bold text-blue-600 mt-1">${data.totalShops}</p></div></div>
+                    <div class="p-6 bg-white rounded-lg shadow flex items-center"><i class="fas fa-users text-4xl text-emerald-500 mr-4"></i><div><h2 class="text-lg font-medium text-gray-600">總訂閱數</h2><p class="text-3xl font-bold text-emerald-600 mt-1">${data.totalSubscribers}</p></div></div>
+                    <div class="p-6 bg-white rounded-lg shadow flex items-center"><i class="fas fa-comment-dots text-4xl text-yellow-500 mr-4"></i><div><h2 class="text-lg font-medium text-gray-600">問題回報數</h2><p class="text-3xl font-bold text-yellow-600 mt-1">${data.totalFeedback}</p></div></div>
+                    <div class="p-6 bg-white rounded-lg shadow flex items-center"><i class="fas fa-user-plus text-4xl text-purple-500 mr-4"></i><div><h2 class="text-lg font-medium text-gray-600">最新訂閱者</h2><p class="text-sm font-bold text-purple-600 mt-1 truncate">${data.latestSubscriber}</p></div></div>
+                </div>`;
         },
         subscribers: async () => {
             const data = await apiFetch('getSubscribers');
-            const subscribersHtml = data.subscribers.map(s => `<tr><td class="py-2 px-4 border-b">${s.email}</td><td class="py-2 px-4 border-b">${new Date(s.timestamp).toLocaleString()}</td><td class="py-2 px-4 border-b"><button data-action="delete-subscriber" data-email="${s.email}" class="text-red-500">刪除</button></td></tr>`).join('');
-            return `<h1 class="text-3xl font-bold mb-6">訂閱者管理</h1><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table><thead><tr><th>Email</th><th>訂閱時間</th><th>操作</th></tr></thead><tbody>${subscribersHtml.length ? subscribersHtml : `<tr><td colspan="3" class="text-center p-4">沒有訂閱者資料</td></tr>`}</tbody></table></div>`;
+            return `<h1 class="text-3xl font-bold mb-6">訂閱者管理</h1><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table class="min-w-full"><thead><tr><th class="py-2 px-4 text-left">Email</th><th class="py-2 px-4 text-left">訂閱時間</th><th class="py-2 px-4 text-left">操作</th></tr></thead><tbody>${data.subscribers.map(s => `<tr><td class="py-2 px-4 border-b">${s.email}</td><td class="py-2 px-4 border-b">${new Date(s.timestamp).toLocaleString()}</td><td class="py-2 px-4 border-b"><button class="text-red-500 hover:text-red-700" data-action="delete-subscriber" data-email="${s.email}">刪除</button></td></tr>`).join('')}</tbody></table></div>`;
         },
         announcements: async () => {
-             const data = await apiFetch('getAnnouncements');
-             const announcements = data.announcements || {};
-             const langTabs = createLangTabs(LANGUAGES);
-             const langFields = LANGUAGES.map(lang => `<div data-tab-content="${lang}" class="tab-content ${lang === 'zh-TW' ? 'active' : ''}"><textarea name="content_${lang}" class="w-full border p-2 rounded" rows="5">${announcements[lang] || ''}</textarea></div>`).join('');
-             return `<h1 class="text-3xl font-bold mb-6">公告管理</h1><div class="bg-white p-6 rounded-lg shadow"><form id="announcementsForm"><div class="border-b border-gray-200" data-tab-container><nav class="flex -mb-px">${langTabs}</nav></div><div class="py-4 tab-content-container">${langFields}</div><button type="submit" class="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-md">儲存公告</button></form></div>`;
+            const { announcements } = await apiFetch('getAnnouncements');
+            return `<h1 class="text-3xl font-bold mb-6">公告管理</h1><div class="bg-white p-6 rounded-lg shadow"><label for="announcementsEditor" class="block text-lg font-medium mb-2">公告內容</label><textarea id="announcementsEditor" class="w-full h-48 p-3 border rounded">${announcements}</textarea><button id="saveAnnouncements" class="mt-4 px-4 py-2 text-white bg-emerald-600 rounded">儲存</button></div>`;
         },
         policies: async () => {
             const data = await apiFetch('getPolicies');
-            const policies = data.policies || {};
-            const keys = ['privacy', 'disclaimer'];
-            const langTabs = createLangTabs(LANGUAGES);
-            const policyForms = keys.map(key => {
-                const policyData = policies[key] || {};
-                const langFields = LANGUAGES.map(lang => `<div data-tab-content="${lang}" class="tab-content ${lang === 'zh-TW' ? 'active' : ''}"><textarea name="${key}_${lang}" class="w-full border p-2 rounded" rows="8">${policyData[lang] || ''}</textarea></div>`).join('');
-                return `<div class="mb-8"><h2 class="text-xl font-semibold mb-2">${key}</h2><div class="border-b border-gray-200" data-tab-container><nav class="flex -mb-px">${langTabs}</nav></div><div class="py-4 tab-content-container">${langFields}</div></div>`;
-            }).join('');
-            return `<h1 class="text-3xl font-bold mb-6">政策管理</h1><div class="bg-white p-6 rounded-lg shadow"><form id="policiesForm">${policyForms}<button type="submit" class="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-md">儲存所有政策</button></form></div>`;
+            return `<h1 class="text-3xl font-bold mb-6">政策管理</h1><div class="bg-white p-6 rounded-lg shadow space-y-6"><div><label for="privacy" class="block text-lg font-medium mb-2">隱私權政策</label><textarea id="privacy" class="w-full h-48 p-3 border rounded">${data.privacy || ''}</textarea><button data-key="privacy" class="save-policy mt-2 px-4 py-2 text-white bg-emerald-600">儲存</button></div><div><label for="disclaimer" class="block text-lg font-medium mb-2">免責聲明</label><textarea id="disclaimer" class="w-full h-48 p-3 border rounded">${data.disclaimer || ''}</textarea><button data-key="disclaimer" class="save-policy mt-2 px-4 py-2 text-white bg-emerald-600">儲存</button></div></div>`;
         },
+        shops: async () => {
+            const data = await apiFetch('getShops');
+            return `<div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">店家管理</h1><div class="space-x-2"><button id="add-shop" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">新增店家</button><button id="batch-upload-shops" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">批次上傳</button></div></div><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table class="min-w-full"><thead><tr><th class="py-2 px-4 text-left">店家名稱</th><th class="py-2 px-4 text-left">類型</th><th class="py-2 px-4 text-left">操作</th></tr></thead><tbody>${data.shops.map(s => `<tr><td class="py-2 px-4 border-b">${s['name_zh-TW']}</td><td class="py-2 px-4 border-b">${s['type_zh-TW']}</td><td class="py-2 px-4 border-b space-x-2"><button class="text-blue-500" data-action="edit-shop" data-id="${s.id}">編輯</button><button class="text-red-500" data-action="delete-shop" data-id="${s.id}">刪除</button><button class="text-purple-500" data-action="recommend-shop" data-id="${s.id}">推薦</button></td></tr>`).join('')}</tbody></table></div>`;
+        }
     };
 
     const navigateTo = async (sectionId) => {
@@ -311,58 +340,62 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
         try {
             ui.mainContent.innerHTML = await pageRenderers[sectionId]();
-            activateTabLogic('[data-tab-container]');
-        } catch(e) { /* Error handled by apiFetch */ }
+        } catch(e) {
+            ui.mainContent.innerHTML = `<div class="text-red-500 p-4 bg-red-100 rounded">無法載入。請檢查錯誤彈窗以獲取詳細資訊。</div>`;
+        }
     };
     
-    ui.mainContent.addEventListener('click', async (e) => {
-        const target = e.target.closest('button');
-        if (!target) return;
-        const action = target.dataset.action;
-        const id = target.dataset.id;
-        try {
-            if (target.id === 'add-tag') openTagForm();
-            else if (action === 'edit-tag') openTagForm(id);
-            else if (action === 'delete-tag' && confirm('確定要刪除此標籤嗎？')) { await apiFetch('deleteTag', { tagId: id }); navigateTo('tags'); }
-            
-            else if (action === 'add-shop') openShopForm();
-            else if (action === 'batch-upload-shops') openBatchUploadModal();
-            else if (action === 'edit-shop') openShopForm(id);
-            else if (action === 'recommend-shop') {
-                const customMessage = prompt('請輸入要附加在推薦信中的訊息（可留空）：');
-                if (customMessage !== null) {
-                    const result = await apiFetch('sendRecommendation', { shopId: id, customMessage });
-                    alert(result.message);
-                }
-            }
-            else if (action === 'delete-shop' && confirm('確定要永久刪除此店家嗎？')) { await apiFetch('deleteShop', { id }); navigateTo('shops'); }
-            else if (action === 'delete-subscriber' && confirm('確定要刪除此訂閱者嗎？')) { await apiFetch('deleteSubscriber', { email: target.dataset.email }); navigateTo('subscribers'); }
-        } catch(err) { /* handled by apiFetch */ }
-    });
+    const setupEventListeners = () => {
+        ui.loginForm.addEventListener('submit', (e) => { e.preventDefault(); login(document.getElementById('password').value); });
+        ui.logoutButton.addEventListener('click', logout);
+        ui.closeErrorModal.addEventListener('click', () => ui.errorModal.classList.add('hidden'));
+        ui.closeModalButton.addEventListener('click', closeModal);
+        ui.closeModalButtonX.addEventListener('click', closeModal);
 
-    ui.mainContent.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        try {
-            if (form.id === 'announcementsForm') {
-                const formData = new FormData(form); const announcements = {};
-                LANGUAGES.forEach(lang => { announcements[lang] = formData.get(`content_${lang}`); });
-                await apiFetch('setAnnouncements', { announcements }); alert('公告已更新');
-            } else if (form.id === 'policiesForm') {
-                const formData = new FormData(form); const policies = { privacy: {}, disclaimer: {} };
-                Object.keys(policies).forEach(key => { LANGUAGES.forEach(lang => { policies[key][lang] = formData.get(`${key}_${lang}`); }); });
-                await apiFetch('setPolicies', { policies }); alert('政策已更新');
-            }
-        } catch(err) { /* handled by apiFetch */ }
-    });
-    
-    ui.loginForm.addEventListener('submit', (e) => { e.preventDefault(); login(document.getElementById('password').value); });
-    ui.logoutButton.addEventListener('click', logout);
-    ui.closeErrorModal.addEventListener('click', () => ui.errorModal.classList.add('hidden'));
-    ui.closeModalButton.addEventListener('click', closeModal);
-    ui.closeModalButtonX.addEventListener('click', closeModal);
-    ui.sidebarItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(e.currentTarget.dataset.section); }));
-    
+        ui.sidebarItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(e.currentTarget.dataset.section); }));
+        
+        ui.mainContent.addEventListener('click', async (e) => {
+            const target = e.target.closest('button');
+            if(!target) return;
+
+            const action = target.dataset.action;
+            const id = target.dataset.id;
+            const email = target.dataset.email;
+
+            try {
+                if (target.id === 'add-shop') { openShopForm(); }
+                if (target.id === 'batch-upload-shops') { openBatchUploadModal(); }
+                if (action === 'edit-shop') { openShopForm(id); }
+                if (action === 'delete-shop' && confirm(`確定要刪除此店家嗎？`)) {
+                    await apiFetch('deleteShop', { id });
+                    showToast('店家已刪除');
+                    navigateTo('shops');
+                }
+                if (action === 'delete-subscriber' && confirm(`確定要刪除此訂閱者嗎？`)) {
+                    await apiFetch('deleteSubscriber', { email });
+                    showToast('訂閱者已刪除');
+                    navigateTo('subscribers');
+                }
+                if (action === 'recommend-shop' && confirm(`確定要向所有訂閱者推薦此店家嗎？`)) {
+                    await apiFetch('sendRecommendation', { shopId: id });
+                    showToast('推薦信已開始發送');
+                }
+                if (target.id === 'saveAnnouncements') {
+                    const content = document.getElementById('announcementsEditor').value;
+                    await apiFetch('setAnnouncements', { payload: { content } });
+                    showToast('公告已儲存');
+                }
+                if (target.classList.contains('save-policy')) {
+                    const key = target.dataset.key;
+                    const value = document.getElementById(key).value;
+                    await apiFetch('setPolicy', { payload: { key, value } });
+                    showToast('政策已儲存');
+                }
+            } catch(error) { /* Handled by apiFetch */ }
+        });
+    };
+
+    setupEventListeners();
     checkLogin();
 });
 </script>
