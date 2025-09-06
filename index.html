@@ -57,7 +57,7 @@
     // =================================================================
     // CONFIGURATION & STATE
     // =================================================================
-    const SCRIPT_URL = 'PASTE_YOUR_NEW_SCRIPT_URL_HERE';
+    const SCRIPT_URL = '請在這裡貼上您新的 Web App URL'; // <--- !!! 請務必修改這裡 !!!
     const LANGUAGES = [
         { code: 'zh-TW', name: '繁中' }, { code: 'en', name: 'English' }, { code: 'fr', name: 'Français' },
         { code: 'de', name: 'Deutsch' }, { code: 'es', name: 'Español' }, { code: 'ja', name: '日本語' }, { code: 'la', name: 'Latina' }
@@ -96,7 +96,7 @@
             return result.data;
         } catch (error) {
             console.error(`API Call Failed for action "${action}":`, error);
-            if (error.message.includes('Invalid token')) handleLogout();
+            if (error.message.includes('Invalid token') || error.message.includes('權杖無效')) handleLogout();
             alert(`發生錯誤: ${error.message}`);
             throw error;
         }
@@ -108,7 +108,7 @@
     async function navigateTo(view) {
         appState.currentView = view;
         document.querySelectorAll('.sidebar-link').forEach(l => l.classList.toggle('active', l.dataset.view === view));
-        const contentArea = document.getElementById('content-area');
+        const contentArea = byId('content-area');
         contentArea.innerHTML = `<div class="text-center p-8">讀取中...</div>`;
         try {
             switch(view) {
@@ -126,7 +126,7 @@
 
     async function renderDashboard() {
         const stats = await apiCall('getDashboardStats');
-        document.getElementById('content-area').innerHTML = `
+        byId('content-area').innerHTML = `
             <h1 class="text-3xl font-bold mb-6">儀表板</h1>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 ${Object.entries({shops:'總商店數',tags:'總標籤數',subscribers:'總訂閱者',feedback:'總回饋數'}).map(([key, title]) => `
@@ -149,9 +149,14 @@
                     <button onclick="deleteShop('${shop.id}')" class="text-red-600 hover:underline ml-2">刪除</button>
                 </td>
             </tr>`).join('');
-        document.getElementById('content-area').innerHTML = `
-            <div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">商店管理</h1>
-                <button onclick="openShopModal()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">新增商店</button></div>
+        byId('content-area').innerHTML = `
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold">商店管理</h1>
+                <div>
+                    <button onclick="openBatchUploadModal()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2">批次上傳</button>
+                    <button onclick="openShopModal()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">新增商店</button>
+                </div>
+            </div>
             <div class="bg-white p-4 rounded-lg shadow"><table class="w-full text-left">
                 <thead><tr class="border-b"><th class="p-3">名稱</th><th class="p-3">地址</th><th class="p-3">操作</th></tr></thead>
                 <tbody>${tableRows}</tbody></table></div>`;
@@ -167,7 +172,7 @@
                     <button onclick="openTagModal('${tag.id}')" class="text-blue-600 hover:underline">編輯</button>
                     <button onclick="deleteTag('${tag.id}')" class="text-red-600 hover:underline ml-2">刪除</button>
                 </td></tr>`).join('');
-        document.getElementById('content-area').innerHTML = `
+        byId('content-area').innerHTML = `
             <div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">標籤管理</h1>
                 <button onclick="openTagModal()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">新增標籤</button></div>
             <div class="bg-white p-4 rounded-lg shadow"><table class="w-full text-left">
@@ -182,7 +187,7 @@
                 <td class="p-3">${sub.Email}</td><td class="p-3">${new Date(sub.Timestamp).toLocaleString()}</td>
                 <td class="p-3"><button onclick="deleteSubscriber('${sub.Email}')" class="text-red-600 hover:underline ml-2">刪除</button></td>
             </tr>`).join('');
-        document.getElementById('content-area').innerHTML = `
+        byId('content-area').innerHTML = `
             <h1 class="text-3xl font-bold mb-6">訂閱者管理</h1>
             <div class="bg-white p-4 rounded-lg shadow"><table class="w-full text-left">
                 <thead><tr class="border-b"><th class="p-3">Email</th><th class="p-3">訂閱時間</th><th class="p-3">操作</th></tr></thead>
@@ -192,77 +197,29 @@
     async function renderAnnouncements() {
         const { announcements } = await apiCall('getAnnouncements');
         appState.announcements = announcements;
-        const contentArea = document.getElementById('content-area');
+        const contentArea = byId('content-area');
         const announcement = announcements[0] || {}; 
-
         const tabButtons = LANGUAGES.map((lang, i) => `<button type="button" class="tab-button px-4 py-2 border-b-2 ${i===0 ? 'active' : ''}" data-lang="${lang.code}">${lang.name}</button>`).join('');
-        const textAreas = LANGUAGES.map((lang, i) => `
-            <div class="lang-field-group ${i===0 ? '' : 'hidden'}" data-lang="${lang.code}">
-                <label class="block text-gray-700 mt-2 mb-1">公告內容 (${lang.name})</label>
-                <textarea id="announcement-content-${lang.code}" class="w-full p-2 border rounded h-48">${announcement[`content_${lang.code}`] || ''}</textarea>
-            </div>`).join('');
-
-        contentArea.innerHTML = `
-            <h1 class="text-3xl font-bold mb-6">公告管理</h1>
-            <p class="mb-4 text-gray-600">此處的內容將顯示在網站前台最上方作為橫幅公告。</p>
-            <div id="announcements-form" class="bg-white p-6 rounded-lg shadow">
-                <div class="border-b mb-4">${tabButtons}</div>
-                ${textAreas}
-                <div class="flex justify-end mt-4">
-                     <button onclick="saveAnnouncements()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">儲存變更</button>
-                </div>
-            </div>
-        `;
-        
+        const textAreas = LANGUAGES.map((lang, i) => `<div class="lang-field-group ${i===0 ? '' : 'hidden'}" data-lang="${lang.code}"><label class="block text-gray-700 mt-2 mb-1">公告內容 (${lang.name})</label><textarea id="announcement-content-${lang.code}" class="w-full p-2 border rounded h-48">${announcement[`content_${lang.code}`] || ''}</textarea></div>`).join('');
+        contentArea.innerHTML = `<h1 class="text-3xl font-bold mb-6">公告管理</h1><p class="mb-4 text-gray-600">此處的內容將顯示在網站前台最上方作為橫幅公告。</p><div id="announcements-form" class="bg-white p-6 rounded-lg shadow"><div class="border-b mb-4">${tabButtons}</div>${textAreas}<div class="flex justify-end mt-4"><button onclick="saveAnnouncements()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">儲存變更</button></div></div>`;
         const form = contentArea.querySelector('#announcements-form');
-        form.querySelectorAll('.tab-button').forEach(btn => btn.onclick = (e) => {
-            const lang = e.target.dataset.lang;
-            form.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            form.querySelectorAll('.lang-field-group').forEach(group => group.classList.toggle('hidden', group.dataset.lang !== lang));
-        });
+        form.querySelectorAll('.tab-button').forEach(btn => btn.onclick = (e) => switchLanguageTab(e.target, form));
     }
     
     async function renderPolicies() {
         const { policies } = await apiCall('getPolicies');
         appState.policies = policies;
-        const contentArea = document.getElementById('content-area');
-        
+        const contentArea = byId('content-area');
         const createTabbedTextArea = (policyKey, title) => {
             const policy = policies[policyKey] || {};
             const tabButtons = LANGUAGES.map((lang, i) => `<button type="button" class="tab-button px-4 py-2 border-b-2 ${i===0 ? 'active' : ''}" data-lang="${lang.code}">${lang.name}</button>`).join('');
-            const textAreas = LANGUAGES.map((lang, i) => `
-                <div class="lang-field-group ${i===0 ? '' : 'hidden'}" data-lang="${lang.code}">
-                     <textarea id="policy-${policyKey}-${lang.code}" class="w-full p-2 border rounded h-32">${policy[`value_${lang.code}`] || ''}</textarea>
-                </div>`).join('');
-            return `
-                <div id="${policyKey}-section">
-                    <label class="block text-gray-700 font-bold mb-2">${title}</label>
-                    <div class="border-b mb-2">${tabButtons}</div>
-                    ${textAreas}
-                </div>
-            `;
+            const textAreas = LANGUAGES.map((lang, i) => `<div class="lang-field-group ${i===0 ? '' : 'hidden'}" data-lang="${lang.code}"><textarea id="policy-${policyKey}-${lang.code}" class="w-full p-2 border rounded h-32">${policy[`value_${lang.code}`] || ''}</textarea></div>`).join('');
+            return `<div id="${policyKey}-section"><label class="block text-gray-700 font-bold mb-2">${title}</label><div class="border-b mb-2">${tabButtons}</div>${textAreas}</div>`;
         };
-
-        contentArea.innerHTML = `
-            <h1 class="text-3xl font-bold mb-6">政策管理</h1>
-            <div id="policies-form" class="bg-white p-6 rounded-lg shadow space-y-6">
-                ${createTabbedTextArea('privacy', '隱私權政策 (Privacy Policy)')}
-                ${createTabbedTextArea('disclaimer', '免責聲明 (Disclaimer)')}
-                <div class="text-right">
-                    <button onclick="savePolicies()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">儲存變更</button>
-                </div>
-            </div>
-        `;
-
+        contentArea.innerHTML = `<h1 class="text-3xl font-bold mb-6">政策管理</h1><div id="policies-form" class="bg-white p-6 rounded-lg shadow space-y-6">${createTabbedTextArea('privacy', '隱私權政策 (Privacy Policy)')}${createTabbedTextArea('disclaimer', '免責聲明 (Disclaimer)')}<div class="text-right"><button onclick="savePolicies()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">儲存變更</button></div></div>`;
         ['privacy', 'disclaimer'].forEach(key => {
             const section = contentArea.querySelector(`#${key}-section`);
-            section.querySelectorAll('.tab-button').forEach(btn => btn.onclick = (e) => {
-                const lang = e.target.dataset.lang;
-                section.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                section.querySelectorAll('.lang-field-group').forEach(group => group.classList.toggle('hidden', group.dataset.lang !== lang));
-            });
+            section.querySelectorAll('.tab-button').forEach(btn => btn.onclick = (e) => switchLanguageTab(e.target, section));
         });
     }
 
@@ -270,15 +227,12 @@
     // ACTIONS & EVENT HANDLERS
     // =================================================================
     function setupEventListeners() {
-        document.getElementById('login-form').addEventListener('submit', handleLogin);
-        document.getElementById('logout-btn').addEventListener('click', handleLogout);
-        document.querySelectorAll('.sidebar-link').forEach(link => {
-            if(link.dataset.view) {
-                link.addEventListener('click', e => { e.preventDefault(); navigateTo(e.target.dataset.view); });
-            }
+        byId('login-form').addEventListener('submit', handleLogin);
+        byId('logout-btn').addEventListener('click', handleLogout);
+        document.querySelectorAll('.sidebar-link[data-view]').forEach(link => {
+            link.addEventListener('click', e => { e.preventDefault(); navigateTo(link.dataset.view); });
         });
     }
-
     async function handleLogin(e) {
         e.preventDefault();
         const [username, password] = [byId('username').value, byId('password').value];
@@ -286,64 +240,59 @@
             const data = await apiCall('login', { username, password });
             appState.token = data.token; localStorage.setItem('adminToken', data.token);
             initAdminApp();
-        } catch (error) {
-            byId('login-error').textContent = '登入失敗: ' + error.message;
-        }
+        } catch (error) { byId('login-error').textContent = '登入失敗: ' + error.message; }
     }
-
     function handleLogout() { appState.token = null; localStorage.removeItem('adminToken'); initAdminApp(); }
-    
     async function deleteItem(type, id, confirmMsg, successMsg) {
         if (!confirm(confirmMsg)) return;
         try {
             await apiCall(`delete${type}`, { id: id, email: id });
-            alert(successMsg);
-            navigateTo(`${type.toLowerCase()}s`);
+            alert(successMsg); navigateTo(`${type.toLowerCase()}s`);
         } catch (error) { alert(`刪除失敗: ${error.message}`); }
     }
     const deleteShop = (id) => deleteItem('Shop', id, '確定要刪除這家商店嗎？', '商店已刪除');
     const deleteTag = (id) => deleteItem('Tag', id, '確定要刪除這個標籤嗎？', '標籤已刪除');
     const deleteSubscriber = (email) => deleteItem('Subscriber', email, `確定要刪除訂閱者 ${email} 嗎？`, '訂閱者已刪除');
-
     async function saveAnnouncements() {
         const announcementData = {};
-        LANGUAGES.forEach(lang => {
-            announcementData[`content_${lang.code}`] = byId(`announcement-content-${lang.code}`).value;
-        });
-        try {
-            await apiCall('setAnnouncements', { announcements: [announcementData] });
-            alert('公告已更新');
-            navigateTo('announcements');
+        LANGUAGES.forEach(lang => { announcementData[`content_${lang.code}`] = byId(`announcement-content-${lang.code}`).value; });
+        try { await apiCall('setAnnouncements', { announcements: [announcementData] }); alert('公告已更新'); navigateTo('announcements');
         } catch(e) { alert('更新失敗: ' + e.message); }
     }
-    
     async function savePolicies() {
-        const updatedPolicies = {
-            privacy: { key: 'privacy' }, disclaimer: { key: 'disclaimer' }
-        };
+        const updatedPolicies = { privacy: { key: 'privacy' }, disclaimer: { key: 'disclaimer' } };
         LANGUAGES.forEach(lang => {
             updatedPolicies.privacy[`value_${lang.code}`] = byId(`policy-privacy-${lang.code}`).value;
             updatedPolicies.disclaimer[`value_${lang.code}`] = byId(`policy-disclaimer-${lang.code}`).value;
         });
-        try {
-            await apiCall('setPolicies', { policies: updatedPolicies });
-            alert('政策已更新');
-            navigateTo('policies');
+        try { await apiCall('setPolicies', { policies: updatedPolicies }); alert('政策已更新'); navigateTo('policies');
         } catch(e) { alert('更新失敗: ' + e.message); }
     }
+    
     // =================================================================
-    // MODAL FUNCTIONS
+    // MODAL & UI HELPERS
     // =================================================================
-    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-
+    const byId = (id) => document.getElementById(id);
+    const switchLanguageTab = (target, container) => {
+        const lang = target.dataset.lang;
+        container.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+        target.classList.add('active');
+        container.querySelectorAll('.lang-field-group').forEach(group => group.classList.toggle('hidden', group.dataset.lang !== lang));
+    };
+    function closeModal() { byId('modal').classList.add('hidden'); }
     function openShopModal(id = null) {
-        const shop = id ? appState.shops.find(s => s.id === id) : {};
+        const shop = id ? appState.shops.find(s => s.id === id) : { tags: [] };
         const modalContent = byId('modal-content');
-        
+        const tagCheckboxes = appState.tags.map(tag => `
+            <label class="inline-flex items-center mr-4 mb-2 p-1 rounded hover:bg-gray-100 cursor-pointer">
+                <input type="checkbox" class="shop-tag-checkbox form-checkbox h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500" value="${tag.id}" ${shop.tags.includes(tag.id) ? 'checked' : ''}>
+                <span class="ml-2 text-sm text-gray-700">${tag['name_zh-TW'] || tag.id}</span>
+            </label>
+        `).join('');
         const tabButtons = LANGUAGES.map((lang, i) => `<button type="button" class="tab-button px-4 py-2 border-b-2 ${i===0 ? 'active' : ''}" data-lang="${lang.code}">${lang.name}</button>`).join('');
         const langFields = (f) => LANGUAGES.map((l, i) => `<div class="lang-field-group ${i===0 ? '' : 'hidden'}" data-lang="${l.code}"><label class="block mb-1">${f} (${l.name})</label><input type="text" id="shop-${f}-${l.code}" class="w-full p-2 border rounded" value="${shop[`${f}_${l.code}`] || ''}"></div>`).join('');
         const langTextAreas = (f) => LANGUAGES.map((l, i) => `<div class="lang-field-group ${i===0 ? '' : 'hidden'}" data-lang="${l.code}"><label class="block mb-1">${f} (${l.name})</label><textarea id="shop-${f}-${l.code}" class="w-full p-2 border rounded h-24">${shop[`${f}_${l.code}`] || ''}</textarea></div>`).join('');
-
+        
         modalContent.innerHTML = `
             <h2 class="text-2xl font-bold mb-4">${id ? '編輯商店' : '新增商店'}</h2>
             <form id="shop-form" class="max-h-[70vh] overflow-y-auto pr-2">
@@ -355,58 +304,74 @@
                 </div>
                 <div class="border-b mb-4">${tabButtons}</div>
                 ${langFields('name')} ${langFields('address')} ${langTextAreas('description')} ${langTextAreas('longDescription')}
+                <div class="mt-4">
+                    <label class="block mb-2 font-semibold text-gray-700">標籤</label>
+                    <div class="p-3 border rounded-md bg-gray-50 max-h-32 overflow-y-auto">
+                        ${tagCheckboxes || '<p class="text-sm text-gray-500">沒有可用的標籤。請先至「標籤管理」新增標籤。</p>'}
+                    </div>
+                </div>
                 <div class="flex justify-end pt-4 mt-4 border-t">
                     <button type="button" onclick="closeModal()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mr-2">取消</button>
                     <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">儲存</button>
                 </div>
             </form>`;
 
-        modalContent.querySelectorAll('.tab-button').forEach(btn => btn.onclick = (e) => {
-            const lang = e.target.dataset.lang;
-            modalContent.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            modalContent.querySelectorAll('.lang-field-group').forEach(group => group.classList.toggle('hidden', group.dataset.lang !== lang));
-        });
+        modalContent.querySelectorAll('.tab-button').forEach(btn => btn.onclick = (e) => switchLanguageTab(e.target, modalContent));
         
         byId('shop-form').addEventListener('submit', async e => {
             e.preventDefault();
             const shopData = { id: shop.id || '', lat: byId('shop-lat').value, lng: byId('shop-lng').value, phone: byId('shop-phone').value, website: byId('shop-website').value };
             ['name','address','description','longDescription'].forEach(f => LANGUAGES.forEach(l => shopData[`${f}_${l.code}`] = byId(`shop-${f}-${l.code}`).value));
-            try {
-                await apiCall('saveShop', { shopData });
+            shopData.tags = Array.from(document.querySelectorAll('.shop-tag-checkbox:checked')).map(cb => cb.value);
+            try { 
+                await apiCall('saveShop', { shopData }); 
                 alert('商店資料已儲存'); closeModal(); navigateTo('shops');
-            } catch (error) { alert('儲存失敗: ' + error.message); }
+            } catch (error) { 
+                alert('儲存失敗: ' + error.message); 
+            }
         });
-        document.getElementById('modal').classList.remove('hidden');
+        byId('modal').classList.remove('hidden');
     }
 
     function openTagModal(id = null) {
         const tag = id ? appState.tags.find(t => t.id === id) : {};
         const langFields = LANGUAGES.map(lang => `<div><label class="block mb-1">名稱 (${lang.name})</label><input type="text" id="tag-name-${lang.code}" class="w-full p-2 border rounded" value="${tag[`name_${lang.code}`] || ''}"></div>`).join('');
-        byId('modal-content').innerHTML = `
-             <h2 class="text-2xl font-bold mb-4">${id ? '編輯標籤' : '新增標籤'}</h2>
-             <form id="tag-form" class="space-y-4">${langFields}
-                <div class="flex justify-end pt-4 border-t">
-                    <button type="button" onclick="closeModal()" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded mr-2">取消</button>
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">儲存</button>
-                </div></form>`;
+        byId('modal-content').innerHTML = `<h2 class="text-2xl font-bold mb-4">${id ? '編輯標籤' : '新增標籤'}</h2><form id="tag-form" class="space-y-4">${langFields}<div class="flex justify-end pt-4 border-t"><button type="button" onclick="closeModal()" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded mr-2">取消</button><button type="submit" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">儲存</button></div></form>`;
         byId('tag-form').addEventListener('submit', async e => {
             e.preventDefault();
             const tagData = { id: tag.id || '' };
             LANGUAGES.forEach(l => tagData[`name_${l.code}`] = byId(`tag-name-${l.code}`).value);
-            try {
-                await apiCall('saveTag', { tagData });
-                alert('標籤已儲存'); closeModal(); navigateTo('tags');
+            try { await apiCall('saveTag', { tagData }); alert('標籤已儲存'); closeModal(); navigateTo('tags');
             } catch (error) { alert('儲存失敗: ' + error.message); }
         });
-        document.getElementById('modal').classList.remove('hidden');
+        byId('modal').classList.remove('hidden');
     }
 
-    const byId = (id) => document.getElementById(id);
-    window.openShopModal = openShopModal; window.deleteShop = deleteShop;
-    window.openTagModal = openTagModal; window.deleteTag = deleteTag;
-    window.deleteSubscriber = deleteSubscriber; window.closeModal = closeModal;
-    window.saveAnnouncements = saveAnnouncements; window.savePolicies = savePolicies;
+    function openBatchUploadModal() {
+        byId('modal-content').innerHTML = `
+            <h2 class="text-2xl font-bold mb-4">批次上傳商店 (CSV)</h2>
+            <form id="batch-upload-form">
+                <p class="mb-2">請貼上您的 CSV 資料。第一列必須是標題列。</p>
+                <p class="text-sm text-gray-600 mb-4">必填欄位: name_zh-TW, address_zh-TW, lat, lng。標籤 (tags) 欄位請用<strong class="text-red-600">標籤的名稱</strong>並以逗號分隔，例如: 公平貿易,有機咖啡</p>
+                <textarea id="csv-data" class="w-full h-48 p-2 border rounded font-mono text-sm" placeholder="name_zh-TW,address_zh-TW,lat,lng,tags\n範例商店,範例地址,25.03,121.56,公平貿易"></textarea>
+                <div class="flex justify-end pt-4">
+                    <button type="button" onclick="closeModal()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mr-2">取消</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">上傳</button>
+                </div>
+            </form>`;
+        byId('batch-upload-form').addEventListener('submit', async e => {
+            e.preventDefault();
+            const csvData = byId('csv-data').value;
+            if (!csvData) return alert('請貼上 CSV 資料');
+            try {
+                const result = await apiCall('batchUploadShops', { csvData });
+                alert(result.message); closeModal(); navigateTo('shops');
+            } catch (error) { alert('上傳失敗: ' + error.message); }
+        });
+        byId('modal').classList.remove('hidden');
+    }
+
+    window.openShopModal=openShopModal; window.deleteShop=deleteShop; window.openTagModal=openTagModal; window.deleteTag=deleteTag; window.deleteSubscriber=deleteSubscriber; window.closeModal=closeModal; window.saveAnnouncements=saveAnnouncements; window.savePolicies=savePolicies; window.openBatchUploadModal=openBatchUploadModal;
     </script>
 </body>
 </html>
