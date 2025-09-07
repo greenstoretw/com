@@ -7,41 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
-        /* Custom scrollbar for better aesthetics */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-        .sidebar-item {
-            transition: all 0.2s ease-in-out;
-        }
-        .sidebar-item:hover, .sidebar-item.active {
-            background-color: #10B981; /* emerald-500 */
-            color: white;
-            transform: translateX(4px);
-        }
-        /* Style for loading indicator */
-        #loadingIndicator {
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        .spinner {
-            border-top-color: #3498db;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .sidebar-item { transition: all 0.2s ease-in-out; }
+        .sidebar-item:hover, .sidebar-item.active { background-color: #10B981; color: white; transform: translateX(4px); }
+        .spinner { border-top-color: #3498db; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .modal-content { max-height: 85vh; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -50,13 +24,13 @@
         <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gray-200">
             <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
                 <h2 class="text-2xl font-bold text-center text-gray-800">後台管理登入</h2>
-                <div>
-                    <label for="password" class="text-sm font-medium text-gray-700">密碼</label>
-                    <input type="password" id="password" name="password" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500" placeholder="請輸入密碼">
-                </div>
-                <button id="loginButton" class="w-full px-4 py-2 font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                    登入
-                </button>
+                <form id="loginForm">
+                    <div>
+                        <label for="password" class="text-sm font-medium text-gray-700">密碼</label>
+                        <input type="password" id="password" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500" placeholder="請輸入密碼" required>
+                    </div>
+                    <button type="submit" id="loginButton" class="w-full px-4 py-2 font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2">登入</button>
+                </form>
             </div>
         </div>
 
@@ -71,800 +45,280 @@
                         <a href="#" data-section="subscribers" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-users w-6"></i>訂閱者管理</a>
                         <a href="#" data-section="announcements" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-bullhorn w-6"></i>公告管理</a>
                         <a href="#" data-section="policies" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-file-alt w-6"></i>政策管理</a>
-                        <a href="#" data-section="shops" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-store w-6"></i>店家推薦</a>
+                        <a href="#" data-section="shops" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-store w-6"></i>店家管理</a>
                     </nav>
-                    <div class="px-4 py-4">
-                         <button id="logoutButton" class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
-                            <i class="fas fa-sign-out-alt mr-2"></i>登出
-                        </button>
-                    </div>
+                    <div class="px-4 py-4"><button id="logoutButton" class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"><i class="fas fa-sign-out-alt mr-2"></i>登出</button></div>
                 </div>
 
                 <!-- Main Content -->
-                <main class="flex-1 p-8 overflow-y-auto">
-                    <!-- Dashboard Section -->
-                    <div id="mainDashboardSection" class="content-section">
-                        <h1 class="text-3xl font-bold text-gray-800 mb-6">儀表板</h1>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <div class="p-6 bg-white rounded-lg shadow-md">
-                                <h2 class="text-lg font-semibold text-gray-600">總訂閱數</h2>
-                                <p id="totalSubscribers" class="text-4xl font-bold text-emerald-600 mt-2">0</p>
-                            </div>
-                            <div class="p-6 bg-white rounded-lg shadow-md">
-                                <h2 class="text-lg font-semibold text-gray-600">總店家數</h2>
-                                <p id="totalShops" class="text-4xl font-bold text-blue-600 mt-2">0</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Subscribers Section -->
-                    <div id="subscribersSection" class="content-section hidden">
-                        <h1 class="text-3xl font-bold text-gray-800 mb-6">訂閱者管理</h1>
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <div class="flex justify-between items-center mb-4">
-                                <input type="text" id="subscriberSearch" class="w-1/3 px-3 py-2 border border-gray-300 rounded-md" placeholder="搜尋 Email...">
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full bg-white">
-                                    <thead class="bg-gray-200">
-                                        <tr>
-                                            <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                            <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">訂閱時間</th>
-                                            <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="subscribersTableBody">
-                                        <!-- Subscriber rows will be inserted here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div id="subscriberPagination" class="mt-4 flex justify-end items-center">
-                                <!-- Pagination controls will be inserted here -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Announcements Section -->
-                    <div id="announcementsSection" class="content-section hidden">
-                        <h1 class="text-3xl font-bold text-gray-800 mb-6">公告管理</h1>
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <textarea id="announcementsEditor" class="w-full h-48 p-3 border border-gray-300 rounded-md"></textarea>
-                            <button id="saveAnnouncements" class="mt-4 px-4 py-2 font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700">儲存公告</button>
-                        </div>
-                    </div>
-
-                    <!-- Policies Section -->
-                    <div id="policiesSection" class="content-section hidden">
-                        <h1 class="text-3xl font-bold text-gray-800 mb-6">政策管理</h1>
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <div class="mb-4">
-                                <label for="privacyPolicy" class="block font-medium text-gray-700">隱私權政策</label>
-                                <textarea id="privacyPolicy" class="w-full h-48 p-3 mt-1 border border-gray-300 rounded-md"></textarea>
-                                <button id="savePrivacyPolicy" class="mt-2 px-4 py-2 font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700">儲存隱私權政策</button>
-                            </div>
-                            <div>
-                                <label for="disclaimer" class="block font-medium text-gray-700">免責聲明</label>
-                                <textarea id="disclaimer" class="w-full h-48 p-3 mt-1 border border-gray-300 rounded-md"></textarea>
-                                <button id="saveDisclaimer" class="mt-2 px-4 py-2 font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700">儲存免責聲明</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Shops Section -->
-                    <div id="shopsSection" class="content-section hidden">
-                        <h1 class="text-3xl font-bold text-gray-800 mb-6">店家管理與推薦</h1>
-                         <div class="bg-white p-6 rounded-lg shadow-md">
-                            <div class="flex justify-between items-center mb-4">
-                                <input type="text" id="shopSearch" class="w-1/3 px-3 py-2 border border-gray-300 rounded-md" placeholder="搜尋店家名稱...">
-                                <button id="addShopButton" class="px-4 py-2 font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700">新增店家</button>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full bg-white">
-                                    <thead class="bg-gray-200">
-                                        <tr>
-                                            <th class="py-3 px-6 text-left">店家名稱</th>
-                                            <th class="py-3 px-6 text-left">類型</th>
-                                            <th class="py-3 px-6 text-left">地址</th>
-                                            <th class="py-3 px-6 text-center">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="shopsTableBody">
-                                        <!-- Shop rows will be inserted here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div id="shopPagination" class="mt-4 flex justify-end items-center">
-                                <!-- Shop pagination controls will be inserted here -->
-                            </div>
-                        </div>
-                    </div>
-
-                </main>
+                <main class="flex-1 p-8 overflow-y-auto" id="mainContent"></main>
             </div>
         </div>
     </div>
     
-    <!-- Loading Indicator -->
-    <div id="loadingIndicator" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-        <div class="spinner h-16 w-16 border-4 border-gray-300 rounded-full"></div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden transition-opacity duration-300">
-        <p id="toastMessage"></p>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3 text-center">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                    <i class="fas fa-exclamation-triangle text-red-600 fa-lg"></i>
-                </div>
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2" id="confirmModalTitle">確認操作</h3>
-                <div class="mt-2 px-7 py-3">
-                    <p class="text-sm text-gray-500" id="confirmModalBody">您確定要執行此操作嗎？</p>
-                </div>
-                <div class="items-center px-4 py-3">
-                    <button id="confirmModalButton" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-red-700 focus:outline-none">確認</button>
-                    <button id="cancelModalButton" class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-auto shadow-sm hover:bg-gray-400 focus:outline-none ml-2">取消</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Error Modal -->
-    <div id="errorModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+    <!-- Modals and Indicators -->
+    <div id="loadingIndicator" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-25"><div class="spinner h-16 w-16 border-4 border-gray-300 rounded-full"></div></div>
+    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden"></div>
+    <div id="errorModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden z-[1001] flex items-center justify-center p-4">
         <div class="relative mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <div class="flex items-center justify-center mb-4">
-                     <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                        <i class="fas fa-bug text-red-600 fa-lg"></i>
-                    </div>
-                </div>
-                <h3 class="text-lg leading-6 font-medium text-gray-900 text-center">發生錯誤</h3>
-                <div class="mt-2 px-7 py-3">
-                    <p class="text-sm text-gray-600 text-left mb-4">系統在與後端伺服器通訊時遇到問題。請檢查您的網路連線，並參考以下詳細資訊。</p>
-                    <div class="bg-gray-100 p-4 rounded-md max-h-64 overflow-y-auto">
-                         <pre id="errorDetails" class="text-xs text-left text-gray-800 whitespace-pre-wrap break-all"></pre>
-                    </div>
-                </div>
-                <div class="items-center px-4 py-3 text-center">
-                    <button id="closeErrorModal" class="px-6 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                        關閉
-                    </button>
-                </div>
+            <h3 class="text-lg leading-6 font-medium text-red-700 text-center mb-4">發生錯誤</h3>
+            <div class="bg-red-50 p-4 rounded-md max-h-80 overflow-y-auto"><pre id="errorDetails" class="text-xs text-left text-gray-800 whitespace-pre-wrap break-all"></pre></div>
+            <div class="mt-4 text-center"><button id="closeErrorModal" class="px-6 py-2 bg-red-600 text-white text-base font-medium rounded-md">關閉</button></div>
+        </div>
+    </div>
+    <!-- Generic Form Modal -->
+    <div id="formModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden z-[1000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 id="modalTitle" class="text-xl font-semibold text-gray-800"></h3>
+                <button id="closeModalButtonX" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <div id="modalBody" class="p-6 overflow-y-auto modal-content"></div>
+            <div class="p-4 bg-gray-50 rounded-b-lg flex justify-end gap-4">
+                <button id="closeModalButton" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">取消</button>
+                <button id="saveModalButton" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">儲存</button>
             </div>
         </div>
     </div>
-
-
-    <!-- Shop Edit/Add Modal -->
-    <div id="shopModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-40">
-        <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
-            <h3 class="text-xl leading-6 font-medium text-gray-900 mb-4" id="shopModalTitle">編輯店家</h3>
-            <form id="shopForm">
-                <input type="hidden" id="shopId">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[75vh] overflow-y-auto p-2">
-                    <!-- Column 1 -->
-                    <div>
-                        <label class="block text-sm font-medium">中文名稱</label>
-                        <input type="text" id="name_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
-                        
-                        <label class="block text-sm font-medium mt-4">英文名稱</label>
-                        <input type="text" id="name_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">中文地址</label>
-                        <input type="text" id="address_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">英文地址</label>
-                        <input type="text" id="address_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">緯度</label>
-                        <input type="number" step="any" id="lat" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">經度</label>
-                        <input type="number" step="any" id="lng" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">中文簡短描述</label>
-                        <textarea id="description_zh-TW" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
-
-                        <label class="block text-sm font-medium mt-4">英文簡短描述</label>
-                        <textarea id="description_en" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
-                    </div>
-                    <!-- Column 2 -->
-                    <div>
-                        <label class="block text-sm font-medium">中文類型</label>
-                        <input type="text" id="type_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">英文類型</label>
-                        <input type="text" id="type_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">中文標籤 (逗號分隔)</label>
-                        <input type="text" id="tags_zh-TW" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">英文標籤 (逗號分隔)</label>
-                        <input type="text" id="tags_en" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                        
-                        <label class="block text-sm font-medium mt-4">電話</label>
-                        <input type="text" id="phone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">Email</label>
-                        <input type="email" id="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">網站</label>
-                        <input type="url" id="website" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-
-                        <label class="block text-sm font-medium mt-4">中文詳細描述</label>
-                        <textarea id="longDescription_zh-TW" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
-
-                        <label class="block text-sm font-medium mt-4">英文詳細描述</label>
-                        <textarea id="longDescription_en" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
-                    </div>
-                </div>
-                <div class="flex justify-end mt-4">
-                    <button type="button" id="cancelShopModal" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md mr-2">取消</button>
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-md">儲存</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://script.google.com/macros/s/AKfycbyJ76tpxJ2eeRRqcv3qUqx3Z8nWLqrNsAIxgMR5vnkfmJOXulhhu1Av2T9w4AzDLg83gA/exec';
 
-    // UI Elements
-    const loginScreen = document.getElementById('loginScreen');
-    const dashboard = document.getElementById('dashboard');
-    const loginButton = document.getElementById('loginButton');
-    const logoutButton = document.getElementById('logoutButton');
-    const passwordInput = document.getElementById('password');
+    const ui = {
+        loginScreen: document.getElementById('loginScreen'),
+        dashboard: document.getElementById('dashboard'),
+        loginForm: document.getElementById('loginForm'),
+        logoutButton: document.getElementById('logoutButton'),
+        sidebarItems: document.querySelectorAll('.sidebar-item'),
+        mainContent: document.getElementById('mainContent'),
+        loadingIndicator: document.getElementById('loadingIndicator'),
+        toast: document.getElementById('toast'),
+        errorModal: document.getElementById('errorModal'),
+        errorDetails: document.getElementById('errorDetails'),
+        closeErrorModal: document.getElementById('closeErrorModal'),
+        formModal: document.getElementById('formModal'),
+        modalTitle: document.getElementById('modalTitle'),
+        modalBody: document.getElementById('modalBody'),
+        closeModalButton: document.getElementById('closeModalButton'),
+        closeModalButtonX: document.getElementById('closeModalButtonX'),
+        saveModalButton: document.getElementById('saveModalButton'),
+    };
 
-    const sidebarItems = document.querySelectorAll('.sidebar-item');
-    const contentSections = document.querySelectorAll('.content-section');
-    
-    // State
-    let subscriberState = { currentPage: 1, currentSearch: '' };
-    let shopState = { currentPage: 1, currentSearch: '' };
+    const showToast = (message) => {
+        ui.toast.textContent = message;
+        ui.toast.classList.remove('hidden');
+        setTimeout(() => ui.toast.classList.add('hidden'), 3000);
+    };
 
-    // Toast Notification
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toastMessage');
-
-    // Confirmation Modal
-    const confirmModal = document.getElementById('confirmModal');
-    const confirmModalTitle = document.getElementById('confirmModalTitle');
-    const confirmModalBody = document.getElementById('confirmModalBody');
-    const confirmModalButton = document.getElementById('confirmModalButton');
-    const cancelModalButton = document.getElementById('cancelModalButton');
-    let confirmCallback = null;
-    
-    // Error Modal
-    const errorModal = document.getElementById('errorModal');
-    const errorDetails = document.getElementById('errorDetails');
-    const closeErrorModalBtn = document.getElementById('closeErrorModal');
-
-    // Shop Modal
-    const shopModal = document.getElementById('shopModal');
-
-    // --- Core Functions ---
-
-    /**
-     * Shows a toast notification.
-     * @param {string} message - The message to display.
-     * @param {string} type - 'success' or 'error'.
-     */
-    function showToast(message, type = 'success') {
-        toastMessage.textContent = message;
-        toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg transition-opacity duration-300 ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
-        toast.classList.remove('hidden');
-        setTimeout(() => {
-            toast.classList.add('hidden');
-        }, 3000);
-    }
-
-    /**
-     * Shows a confirmation modal.
-     * @param {string} title - The modal title.
-     * @param {string} body - The modal body text.
-     * @param {function} onConfirm - Callback function to execute on confirmation.
-     */
-    function showConfirm(title, body, onConfirm) {
-        confirmModalTitle.textContent = title;
-        confirmModalBody.textContent = body;
-        confirmCallback = onConfirm;
-        confirmModal.classList.remove('hidden');
-    }
-
-    cancelModalButton.addEventListener('click', () => confirmModal.classList.add('hidden'));
-    confirmModalButton.addEventListener('click', () => {
-        confirmModal.classList.add('hidden');
-        if (confirmCallback) {
-            confirmCallback();
+    const showErrorModal = (error) => {
+        let details = `錯誤類型: ${error.name || '未知錯誤'}\n`;
+        details += `錯誤訊息: ${error.message}\n\n`;
+        if (error.responseText) {
+            details += `後端原始回應 (可能是HTML錯誤頁):\n------------------------------------\n${error.responseText}\n------------------------------------\n\n`;
         }
-    });
+        if (error.stack) { details += `堆疊追蹤:\n${error.stack}`; }
+        ui.errorDetails.textContent = details;
+        ui.errorModal.classList.remove('hidden');
+    };
 
-    /**
-     * Shows the error modal with detailed information.
-     * @param {object|string} details - The error details to display.
-     */
-    function showErrorModal(details) {
-        let formattedDetails = '';
-        if (typeof details === 'object' && details !== null) {
-            for (const [key, value] of Object.entries(details)) {
-                let valueStr = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
-                formattedDetails += `[${key}]:\n${valueStr}\n\n`;
-            }
-        } else {
-            formattedDetails = String(details);
-        }
-        errorDetails.textContent = formattedDetails.trim();
-        errorModal.classList.remove('hidden');
-    }
-    closeErrorModalBtn.addEventListener('click', () => errorModal.classList.add('hidden'));
-
-    /**
-     * Centralized function for making API requests. Includes enhanced error handling.
-     * @param {string} action - The API action to perform.
-     * @param {object} params - Additional parameters for the action.
-     * @returns {Promise<object>} - The successful response data.
-     * @throws {Error} - Throws on API or network failure.
-     */
     async function apiFetch(action, params = {}) {
-        document.getElementById('loadingIndicator').classList.remove('hidden');
-        const token = localStorage.getItem('authToken');
-
-        // Login action is a special case that doesn't require a token
-        if (action !== 'login' && !token) {
-            console.error("Auth token not found.");
-            logout();
-            throw new Error("Auth token not found.");
-        }
-
-        const payload = {
-            action: action,
-            token: token,
-            ...params
-        };
-        
+        ui.loadingIndicator.classList.remove('hidden');
         try {
+            const token = localStorage.getItem('authToken');
+            if (action !== 'login' && !token) {
+                logout();
+                throw new Error("Auth token not found. Please log in again.");
+            }
+            
             const response = await fetch(API_URL, {
                 method: 'POST',
-                redirect: 'follow',
-                body: JSON.stringify(payload),
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' } // Required for Google Apps Script
+                body: JSON.stringify({ action, token, ...params }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                mode: 'cors'
             });
 
-            if (!response.ok) {
-                let errorData = await response.text();
-                try {
-                    // Try parsing as JSON for structured error messages from the backend
-                    errorData = JSON.parse(errorData);
-                } catch (e) { /* Not JSON, use the raw text */ }
-                
-                throw {
-                    message: "HTTP Request Error",
-                    statusCode: response.status,
-                    statusText: response.statusText,
-                    responseBody: errorData
-                };
-            }
-
-            const result = await response.json();
-
-            if (result.status === 'error') {
-                 if (result.message === 'Invalid token') {
-                    logout();
+            const text = await response.text();
+            try {
+                const result = JSON.parse(text);
+                 if (result.status === 'error') {
+                    if (result.message && result.message.toLowerCase().includes('token')) logout();
+                    throw new Error(result.message || 'Unknown backend error');
                 }
-                throw {
-                    message: "Backend API Error",
-                    apiMessage: result.message,
-                    details: result.details || "N/A"
-                };
+                return result.data;
+            } catch (e) {
+                const err = new Error("無法解碼字串。後端可能回傳了非預期的內容 (例如 HTML 錯誤頁面)。");
+                err.responseText = text;
+                err.stack = e.stack;
+                throw err;
             }
-            return result;
         } catch (error) {
-            console.error(`API Fetch Error for action "${action}":`, error);
-            
-            const errorInfo = {
-                "錯誤類型": error.message || "Unknown Network Error",
-                "請求動作": action,
-                "詳細資訊": {}
-            };
-
-            if (error.statusCode) { // Catches HTTP errors (e.g., 404, 500)
-                errorInfo["詳細資訊"]["HTTP 狀態碼"] = error.statusCode;
-                errorInfo["詳細資訊"]["HTTP 狀態訊息"] = error.statusText;
-                errorInfo["詳細資訊"]["後端回應"] = error.responseBody;
-            } else if (error.apiMessage) { // Catches structured errors from our backend API
-                 errorInfo["詳細資訊"]["後端錯誤訊息"] = error.apiMessage;
-                 errorInfo["詳細資訊"]["後端詳細資料"] = error.details;
-            } else { // Catches network errors, most likely CORS issues
-                errorInfo["詳細資訊"]["可能原因"] = "無法連接到後端伺服器。這可能是由於網路中斷，或更常見的是，伺服器端的跨來源資源共享 (CORS) 設定不正確所導致。";
-                errorInfo["詳細資訊"]["CORS 除錯指南"] = "請打開瀏覽器的開發人員工具 (按 F12)，並切換到「主控台」(Console) 分頁，尋找有關 CORS 的具體錯誤訊息。請根據錯誤訊息，確認您的 Google Apps Script 已正確部署為 Web App，並允許來自此網站網域的請求。";
-                errorInfo["詳細資訊"]["原始錯誤堆疊"] = error.stack || error.toString();
-            }
-
-            showErrorModal(errorInfo);
-            throw error; // Re-throw to allow the original calling function to handle UI state if needed
+            showErrorModal(error);
+            throw error;
         } finally {
-            document.getElementById('loadingIndicator').classList.add('hidden');
+            ui.loadingIndicator.classList.add('hidden');
         }
     }
 
+    const login = async (password) => {
+        try {
+            const data = await apiFetch('login', { payload: { password } });
+            if (data && data.token) {
+                localStorage.setItem('authToken', data.token);
+                ui.loginScreen.classList.add('hidden');
+                ui.dashboard.classList.remove('hidden');
+                navigateTo('mainDashboard');
+            }
+        } catch (error) { document.getElementById('password').value = ''; }
+    };
 
-    // --- Authentication ---
-    function checkLogin() {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            loginScreen.classList.add('hidden');
-            dashboard.classList.remove('hidden');
+    const logout = () => {
+        localStorage.removeItem('authToken');
+        ui.dashboard.classList.add('hidden');
+        ui.loginScreen.classList.remove('hidden');
+        ui.mainContent.innerHTML = '';
+    };
+
+    const checkLogin = () => {
+        if (localStorage.getItem('authToken')) {
+            ui.loginScreen.classList.add('hidden');
+            ui.dashboard.classList.remove('hidden');
             navigateTo('mainDashboard');
         } else {
-            loginScreen.classList.remove('hidden');
-            dashboard.classList.add('hidden');
+             ui.dashboard.classList.add('hidden');
+             ui.loginScreen.classList.remove('hidden');
         }
-    }
+    };
 
-    async function login() {
-        const password = passwordInput.value;
-        if (!password) {
-            showToast('請輸入密碼', 'error');
-            return;
-        }
-        try {
-            const data = await apiFetch('login', { password: password });
-            localStorage.setItem('authToken', data.token);
-            checkLogin();
-        } catch (error) {
-            // Error modal is already shown by apiFetch, just clear the input
-            passwordInput.value = '';
-        }
-    }
+    const openModal = (title, bodyHtml, saveHandler) => {
+        ui.modalTitle.textContent = title;
+        ui.modalBody.innerHTML = bodyHtml;
+        ui.formModal.classList.remove('hidden');
+        const newSaveButton = ui.saveModalButton.cloneNode(true);
+        ui.saveModalButton.parentNode.replaceChild(newSaveButton, ui.saveModalButton);
+        ui.saveModalButton = newSaveButton;
+        ui.saveModalButton.onclick = saveHandler;
+    };
 
-    function logout() {
-        localStorage.removeItem('authToken');
-        checkLogin();
-    }
+    const closeModal = () => ui.formModal.classList.add('hidden');
     
-    loginButton.addEventListener('click', login);
-    passwordInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') login();
-    });
-    logoutButton.addEventListener('click', logout);
+    const openShopForm = async (shopId = null) => {
+        const shop = shopId ? (await apiFetch('getShopById', { id: shopId })).shop : {};
+        const title = shopId ? '編輯店家' : '新增店家';
+        const formHtml = `
+            <form id="shopForm" class="space-y-4">
+                <input type="hidden" name="id" value="${shop.id || ''}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="block">名稱 (繁中)</label><input type="text" name="name_zh-TW" class="w-full border p-2 rounded" value="${shop['name_zh-TW'] || ''}" required></div>
+                    <div><label class="block">名稱 (English)</label><input type="text" name="name_en" class="w-full border p-2 rounded" value="${shop['name_en'] || ''}"></div>
+                    <div><label class="block">類型 (繁中)</label><input type="text" name="type_zh-TW" class="w-full border p-2 rounded" value="${shop['type_zh-TW'] || ''}"></div>
+                    <div><label class="block">類型 (English)</label><input type="text" name="type_en" class="w-full border p-2 rounded" value="${shop['type_en'] || ''}"></div>
+                    <div><label class="block">地址 (繁中)</label><input type="text" name="address_zh-TW" class="w-full border p-2 rounded" value="${shop['address_zh-TW'] || ''}"></div>
+                    <div><label class="block">地址 (English)</label><input type="text" name="address_en" class="w-full border p-2 rounded" value="${shop['address_en'] || ''}"></div>
+                    <div><label class="block">電話</label><input type="text" name="phone" class="w-full border p-2 rounded" value="${shop.phone || ''}"></div>
+                    <div><label class="block">網站</label><input type="text" name="website" class="w-full border p-2 rounded" value="${shop.website || ''}"></div>
+                    <div><label class="block">緯度 (Lat)</label><input type="text" name="lat" class="w-full border p-2 rounded" value="${shop.lat || ''}"></div>
+                    <div><label class="block">經度 (Lng)</label><input type="text" name="lng" class="w-full border p-2 rounded" value="${shop.lng || ''}"></div>
+                </div>
+                <div><label class="block">簡短描述 (繁中)</label><textarea name="description_zh-TW" class="w-full border p-2 rounded h-24">${shop['description_zh-TW'] || ''}</textarea></div>
+                <div><label class="block">長描述 (繁中)</label><textarea name="longDescription_zh-TW" class="w-full border p-2 rounded h-24">${shop['longDescription_zh-TW'] || ''}</textarea></div>
+                <div><label class="block">簡短描述 (English)</label><textarea name="description_en" class="w-full border p-2 rounded h-24">${shop['description_en'] || ''}</textarea></div>
+                <div><label class="block">長描述 (English)</label><textarea name="longDescription_en" class="w-full border p-2 rounded h-24">${shop['longDescription_en'] || ''}</textarea></div>
+            </form>`;
+        openModal(title, formHtml, saveShop);
+    };
 
-    // --- Navigation ---
-    function navigateTo(sectionId) {
-        contentSections.forEach(section => section.classList.add('hidden'));
-        sidebarItems.forEach(item => item.classList.remove('active'));
-
-        document.getElementById(`${sectionId}Section`).classList.remove('hidden');
-        document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
-
-        // Fetch data for the new section
-        switch (sectionId) {
-            case 'mainDashboard':
-                fetchDashboardData();
-                break;
-            case 'subscribers':
-                fetchSubscribers();
-                break;
-            case 'announcements':
-                fetchAnnouncements();
-                break;
-            case 'policies':
-                fetchPolicies();
-                break;
-            case 'shops':
-                fetchShops();
-                break;
-        }
-    }
+    const saveShop = async () => {
+        const form = document.getElementById('shopForm');
+        const formData = new FormData(form);
+        const shopData = Object.fromEntries(formData.entries());
+        await apiFetch('saveShop', { shop: shopData });
+        closeModal();
+        showToast('店家已儲存！');
+        navigateTo('shops');
+    };
     
-    sidebarItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            navigateTo(e.currentTarget.dataset.section);
-        });
-    });
-
-    // --- Dashboard Section ---
-    async function fetchDashboardData() {
-        try {
+    const pageRenderers = {
+        mainDashboard: async () => {
             const data = await apiFetch('getDashboardStats');
-            document.getElementById('totalSubscribers').textContent = data.totalSubscribers;
-            document.getElementById('totalShops').textContent = data.totalShops;
-        } catch(error) {
-             document.getElementById('totalSubscribers').textContent = '錯誤';
-             document.getElementById('totalShops').textContent = '錯誤';
-        }
-    }
-
-    // --- Subscribers Section ---
-    async function fetchSubscribers(page = 1, search = '') {
-        subscriberState.currentPage = page;
-        subscriberState.currentSearch = search;
-        try {
-            const data = await apiFetch('getSubscribers', { page, search });
-            renderSubscribers(data.subscribers);
-            renderPagination('subscriberPagination', data.pagination, fetchSubscribers, search);
-        } catch (error) {
-            document.getElementById('subscribersTableBody').innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-500">無法載入訂閱者資料。</td></tr>`;
-        }
-    }
-
-    function renderSubscribers(subscribers) {
-        const tableBody = document.getElementById('subscribersTableBody');
-        tableBody.innerHTML = '';
-        if (subscribers.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-500">找不到訂閱者。</td></tr>';
-            return;
-        }
-        subscribers.forEach(sub => {
-            const row = `
-                <tr>
-                    <td class="py-4 px-6 border-b">${sub.email}</td>
-                    <td class="py-4 px-6 border-b">${sub.timestamp}</td>
-                    <td class="py-4 px-6 border-b">
-                        <button class="text-red-500 hover:text-red-700 delete-subscriber" data-email="${sub.email}">
-                            <i class="fas fa-trash-alt"></i> 刪除
-                        </button>
-                    </td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
-        });
-    }
-
-    async function deleteSubscriber(email) {
-        try {
-            await apiFetch('deleteSubscriber', { email: email });
-            showToast('訂閱者已刪除');
-            fetchSubscribers(subscriberState.currentPage, subscriberState.currentSearch);
-        } catch (error) {
-             // Error modal already shown by apiFetch
-        }
-    }
-    
-    document.getElementById('subscribersTableBody').addEventListener('click', (e) => {
-        const deleteButton = e.target.closest('.delete-subscriber');
-        if (deleteButton) {
-            const email = deleteButton.dataset.email;
-            showConfirm('刪除訂閱者', `您確定要刪除 ${email} 嗎？此操作無法復原。`, () => {
-                deleteSubscriber(email);
-            });
-        }
-    });
-
-    document.getElementById('subscriberSearch').addEventListener('input', (e) => {
-        fetchSubscribers(1, e.target.value);
-    });
-
-    // --- Announcements Section ---
-    async function fetchAnnouncements() {
-        try {
+            return `<h1 class="text-3xl font-bold mb-6">儀表板</h1><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-lg font-medium text-gray-600">總訂閱數</h2><p class="text-4xl font-bold text-emerald-600 mt-2">${data.totalSubscribers}</p></div><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-lg font-medium text-gray-600">總店家數</h2><p class="text-4xl font-bold text-blue-600 mt-2">${data.totalShops}</p></div></div>`;
+        },
+        subscribers: async () => {
+            const data = await apiFetch('getSubscribers');
+            return `<h1 class="text-3xl font-bold mb-6">訂閱者管理</h1><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table class="min-w-full"><thead><tr><th class="py-2 px-4 text-left">Email</th><th class="py-2 px-4 text-left">訂閱時間</th><th class="py-2 px-4 text-left">操作</th></tr></thead><tbody>${data.subscribers.map(s => `<tr><td class="py-2 px-4 border-b">${s.email}</td><td class="py-2 px-4 border-b">${new Date(s.timestamp).toLocaleString()}</td><td class="py-2 px-4 border-b"><button class="text-red-500 hover:text-red-700" data-action="delete-subscriber" data-email="${s.email}">刪除</button></td></tr>`).join('')}</tbody></table></div>`;
+        },
+        announcements: async () => {
             const data = await apiFetch('getAnnouncements');
-            document.getElementById('announcementsEditor').value = data.announcements;
-        } catch (error) {
-            document.getElementById('announcementsEditor').value = '無法載入公告。';
-        }
-    }
-
-    async function updateAnnouncements() {
-        const content = document.getElementById('announcementsEditor').value;
-        try {
-            await apiFetch('updateAnnouncements', { content: content });
-            showToast('公告已更新');
-        } catch (error) {
-            // Error modal is already shown
-        }
-    }
-    document.getElementById('saveAnnouncements').addEventListener('click', updateAnnouncements);
-
-    // --- Policies Section ---
-    async function fetchPolicies() {
-        try {
+            return `<h1 class="text-3xl font-bold mb-6">公告管理</h1><div class="bg-white p-6 rounded-lg shadow"><label for="announcementsEditor" class="block text-lg font-medium mb-2">公告內容</label><textarea id="announcementsEditor" class="w-full h-48 p-3 border rounded">${data.announcements}</textarea><button id="saveAnnouncements" class="mt-4 px-4 py-2 text-white bg-emerald-600 rounded">儲存</button></div>`;
+        },
+        policies: async () => {
             const data = await apiFetch('getPolicies');
-            document.getElementById('privacyPolicy').value = data.privacy || '';
-            document.getElementById('disclaimer').value = data.disclaimer || '';
-        } catch (error) {
-            document.getElementById('privacyPolicy').value = '無法載入隱私權政策。';
-            document.getElementById('disclaimer').value = '無法載入免責聲明。';
+            return `<h1 class="text-3xl font-bold mb-6">政策管理</h1><div class="bg-white p-6 rounded-lg shadow space-y-6"><div><label for="privacy" class="block text-lg font-medium mb-2">隱私權政策</label><textarea id="privacy" class="w-full h-48 p-3 border rounded">${data.privacy || ''}</textarea><button data-key="privacy" class="save-policy mt-2 px-4 py-2 text-white bg-emerald-600">儲存</button></div><div><label for="disclaimer" class="block text-lg font-medium mb-2">免責聲明</label><textarea id="disclaimer" class="w-full h-48 p-3 border rounded">${data.disclaimer || ''}</textarea><button data-key="disclaimer" class="save-policy mt-2 px-4 py-2 text-white bg-emerald-600">儲存</button></div></div>`;
+        },
+        shops: async () => {
+            const data = await apiFetch('getShops');
+            return `<div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">店家管理</h1><button id="add-shop" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">新增店家</button></div><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table class="min-w-full"><thead><tr><th class="py-2 px-4 text-left">店家名稱</th><th class="py-2 px-4 text-left">類型</th><th class="py-2 px-4 text-left">操作</th></tr></thead><tbody>${data.shops.map(s => `<tr><td class="py-2 px-4 border-b">${s['name_zh-TW']}</td><td class="py-2 px-4 border-b">${s['type_zh-TW']}</td><td class="py-2 px-4 border-b space-x-2"><button class="text-blue-500" data-action="edit-shop" data-id="${s.id}">編輯</button><button class="text-red-500" data-action="delete-shop" data-id="${s.id}">刪除</button><button class="text-purple-500" data-action="recommend-shop" data-id="${s.id}">推薦</button></td></tr>`).join('')}</tbody></table></div>`;
         }
-    }
+    };
 
-    async function updatePolicy(key, value) {
+    const navigateTo = async (sectionId) => {
+        ui.sidebarItems.forEach(i => i.classList.remove('active'));
+        document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
         try {
-            await apiFetch('updatePolicy', { key: key, value: value });
-            showToast(`${key === 'privacy' ? '隱私權政策' : '免責聲明'}已更新`);
-        } catch(error) {
-            // Error modal is already shown
+            ui.mainContent.innerHTML = await pageRenderers[sectionId]();
+        } catch(e) {
+            ui.mainContent.innerHTML = `<div class="text-red-500 p-4 bg-red-100 rounded">無法載入。請檢查錯誤彈窗以獲取詳細資訊。</div>`;
         }
-    }
-    document.getElementById('savePrivacyPolicy').addEventListener('click', () => {
-        updatePolicy('privacy', document.getElementById('privacyPolicy').value);
-    });
-    document.getElementById('saveDisclaimer').addEventListener('click', () => {
-        updatePolicy('disclaimer', document.getElementById('disclaimer').value);
-    });
-
-
-    // --- Shops Section ---
-    async function fetchShops(page = 1, search = '') {
-        shopState.currentPage = page;
-        shopState.currentSearch = search;
-        try {
-            const data = await apiFetch('getShops', { page, search });
-            renderShops(data.shops);
-            renderPagination('shopPagination', data.pagination, fetchShops, search);
-        } catch(error) {
-            document.getElementById('shopsTableBody').innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">無法載入店家資料。</td></tr>`;
-        }
-    }
-
-    function renderShops(shops) {
-        const tableBody = document.getElementById('shopsTableBody');
-        tableBody.innerHTML = '';
-        if (shops.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">找不到店家。</td></tr>';
-            return;
-        }
-        shops.forEach(shop => {
-            const row = `
-                <tr>
-                    <td class="py-4 px-6 border-b">${shop['name_zh-TW']}</td>
-                    <td class="py-4 px-6 border-b">${shop['type_zh-TW']}</td>
-                    <td class="py-4 px-6 border-b">${shop['address_zh-TW']}</td>
-                    <td class="py-4 px-6 border-b text-center">
-                        <button class="text-emerald-500 hover:text-emerald-700 mr-3 recommend-shop" data-id="${shop.id}" title="推薦給訂閱者"><i class="fas fa-star"></i></button>
-                        <button class="text-blue-500 hover:text-blue-700 mr-3 edit-shop" data-id="${shop.id}" title="編輯"><i class="fas fa-edit"></i></button>
-                        <button class="text-red-500 hover:text-red-700 delete-shop" data-id="${shop.id}" title="刪除"><i class="fas fa-trash-alt"></i></button>
-                    </td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
-        });
-    }
-
-    document.getElementById('shopSearch').addEventListener('input', (e) => {
-        fetchShops(1, e.target.value);
-    });
-
-    document.getElementById('shopsTableBody').addEventListener('click', (e) => {
-        const target = e.target.closest('button');
-        if (!target) return;
-        
-        const id = target.dataset.id;
-        const shopName = target.closest('tr').cells[0].textContent;
-
-        if (target.classList.contains('edit-shop')) {
-            openShopModal('edit', id);
-        } else if (target.classList.contains('delete-shop')) {
-            showConfirm('刪除店家', `您確定要刪除「${shopName}」嗎？`, () => deleteShop(id));
-        } else if (target.classList.contains('recommend-shop')) {
-            showConfirm('推薦店家', `您確定要將「${shopName}」推薦給所有訂閱者嗎？`, () => recommendShop(id));
-        }
-    });
-
-    async function deleteShop(id) {
-        try {
-            await apiFetch('deleteShop', { id: id });
-            showToast('店家已刪除');
-            fetchShops(shopState.currentPage, shopState.currentSearch);
-        } catch (error) {
-            // Error modal shown
-        }
-    }
+    };
     
-    async function recommendShop(id) {
-        try {
-            const result = await apiFetch('recommendShop', { id: id });
-            showToast(`已成功將店家推薦給 ${result.sentCount} 位訂閱者`);
-        } catch (error) {
-            // Error modal shown
-        }
-    }
+    const setupEventListeners = () => {
+        ui.loginForm.addEventListener('submit', (e) => { e.preventDefault(); login(document.getElementById('password').value); });
+        ui.logoutButton.addEventListener('click', logout);
+        ui.closeErrorModal.addEventListener('click', () => ui.errorModal.classList.add('hidden'));
+        ui.closeModalButton.addEventListener('click', closeModal);
+        ui.closeModalButtonX.addEventListener('click', closeModal);
 
-    // --- Shop Modal Logic ---
-    const shopForm = document.getElementById('shopForm');
-    const shopModalTitle = document.getElementById('shopModalTitle');
-    const shopIdInput = document.getElementById('shopId');
+        ui.sidebarItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(e.currentTarget.dataset.section); }));
+        
+        ui.mainContent.addEventListener('click', async (e) => {
+            const target = e.target;
+            const action = target.dataset.action;
+            const id = target.dataset.id;
+            const email = target.dataset.email;
 
-    document.getElementById('addShopButton').addEventListener('click', () => openShopModal('add'));
-    document.getElementById('cancelShopModal').addEventListener('click', () => shopModal.classList.add('hidden'));
-
-    async function openShopModal(mode, id = null) {
-        shopForm.reset();
-        if (mode === 'add') {
-            shopModalTitle.textContent = '新增店家';
-            shopIdInput.value = '';
-            shopModal.classList.remove('hidden');
-        } else {
-            shopModalTitle.textContent = '編輯店家';
             try {
-                const data = await apiFetch('getShopById', { id: id });
-                const shop = data.shop;
-                for (const key in shop) {
-                    if (document.getElementById(key)) {
-                        document.getElementById(key).value = shop[key];
-                    }
+                if (target.id === 'add-shop') { openShopForm(); }
+                if (action === 'edit-shop') { openShopForm(id); }
+                if (action === 'delete-shop' && confirm(`確定要刪除此店家嗎？`)) {
+                    await apiFetch('deleteShop', { id });
+                    showToast('店家已刪除');
+                    navigateTo('shops');
                 }
-                shopModal.classList.remove('hidden');
-            } catch (error) {
-                // error modal shown
-            }
-        }
-    }
-
-    shopForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const shopData = {};
-        const inputs = shopForm.querySelectorAll('input, textarea');
-        inputs.forEach(input => {
-            if (input.id) {
-                shopData[input.id] = input.value;
-            }
+                if (action === 'delete-subscriber' && confirm(`確定要刪除此訂閱者嗎？`)) {
+                    await apiFetch('deleteSubscriber', { email });
+                    showToast('訂閱者已刪除');
+                    navigateTo('subscribers');
+                }
+                if (action === 'recommend-shop' && confirm(`確定要向所有訂閱者推薦此店家嗎？`)) {
+                    await apiFetch('sendRecommendation', { shopId: id });
+                    showToast('推薦信已開始發送');
+                }
+                if (target.id === 'saveAnnouncements') {
+                    const content = document.getElementById('announcementsEditor').value;
+                    await apiFetch('setAnnouncements', { payload: { content } });
+                    showToast('公告已儲存');
+                }
+                if (target.classList.contains('save-policy')) {
+                    const key = target.dataset.key;
+                    const value = document.getElementById(key).value;
+                    await apiFetch('setPolicy', { payload: { key, value } });
+                    showToast('政策已儲存');
+                }
+            } catch(error) { /* Handled by apiFetch */ }
         });
+    };
 
-        try {
-            await apiFetch('saveShop', { shop: shopData });
-            showToast('店家資料已儲存');
-            shopModal.classList.add('hidden');
-            fetchShops(shopState.currentPage, shopState.currentSearch);
-        } catch (error) {
-            // error modal shown
-        }
-    });
-
-    // --- Pagination ---
-    function renderPagination(containerId, pagination, fetchFunction, search) {
-        const container = document.getElementById(containerId);
-        container.innerHTML = '';
-        if (!pagination || pagination.totalPages <= 1) return;
-
-        const { currentPage, totalPages } = pagination;
-        let html = '<div class="flex items-center space-x-1">';
-
-        // Previous button
-        html += `<button class="px-3 py-1 rounded-md ${currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">&laquo;</button>`;
-
-        // Page numbers
-        // Logic to show a limited number of pages
-        let startPage = Math.max(1, currentPage - 2);
-        let endPage = Math.min(totalPages, currentPage + 2);
-
-        if (startPage > 1) {
-             html += `<button class="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-50" data-page="1">1</button>`;
-             if (startPage > 2) html += `<span class="px-3 py-1">...</span>`;
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-            html += `<button class="px-3 py-1 rounded-md ${i === currentPage ? 'bg-emerald-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}" data-page="${i}">${i}</button>`;
-        }
-        
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) html += `<span class="px-3 py-1">...</span>`;
-            html += `<button class="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-50" data-page="${totalPages}">${totalPages}</button>`;
-        }
-
-        // Next button
-        html += `<button class="px-3 py-1 rounded-md ${currentPage === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">&raquo;</button>`;
-        
-        html += '</div>';
-        container.innerHTML = html;
-
-        container.querySelectorAll('button').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const page = parseInt(e.currentTarget.dataset.page);
-                fetchFunction(page, search);
-            });
-        });
-    }
-
-
-    // --- Initialization ---
+    setupEventListeners();
     checkLogin();
 });
 </script>
