@@ -37,11 +37,22 @@
 
     <!-- Main Dashboard -->
     <div id="dashboard-screen" class="hidden">
-        <div class="flex h-screen bg-gray-900">
+        <div class="relative min-h-screen lg:flex">
+            <!-- Mobile Header -->
+            <header class="lg:hidden bg-gray-800 text-white p-4 flex justify-between items-center shadow-md sticky top-0 z-40">
+                <span class="text-xl font-bold"><i class="fas fa-leaf text-green-400"></i> 管理後台</span>
+                <button id="mobile-menu-button" class="p-2 focus:outline-none">
+                    <i class="fas fa-bars fa-lg"></i>
+                </button>
+            </header>
+
             <!-- Sidebar -->
-            <aside class="w-64 bg-gray-800 text-gray-300 flex flex-col">
-                <div class="p-4 text-2xl font-bold text-white border-b border-gray-700">
-                    <i class="fas fa-leaf text-green-400"></i> 管理選單
+            <aside id="sidebar" class="w-64 bg-gray-800 text-gray-300 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out z-50">
+                <div class="p-4 text-2xl font-bold text-white border-b border-gray-700 flex items-center justify-between">
+                    <span><i class="fas fa-leaf text-green-400"></i> 管理選單</span>
+                    <button id="close-sidebar-button" class="lg:hidden p-2 focus:outline-none">
+                        <i class="fas fa-times fa-lg"></i>
+                    </button>
                 </div>
                 <nav class="flex-1 p-4 space-y-2">
                     <a href="#" data-tab="dashboard" class="tab-link tab-active flex items-center p-3 rounded-lg hover:bg-gray-700 transition">
@@ -64,11 +75,11 @@
                 </div>
             </aside>
             <!-- Main Content -->
-            <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+            <main class="flex-1 p-6 lg:p-8 overflow-y-auto bg-gray-900">
                 <div id="tab-content">
                     <!-- Dashboard Content -->
                     <div id="dashboard-content" class="tab-pane">
-                        <h1 class="text-3xl font-bold mb-6 text-white">儀表板</h1>
+                        <h1 class="text-2xl md:text-3xl font-bold mb-6 text-white">儀表板</h1>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
                                 <h2 class="text-lg font-semibold text-gray-400">總訂閱數</h2>
@@ -86,9 +97,9 @@
                     </div>
                     <!-- Subscribers Content -->
                     <div id="subscribers-content" class="tab-pane hidden">
-                        <h1 class="text-3xl font-bold mb-6 text-white">訂閱者管理</h1>
-                        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-                            <table class="w-full text-left">
+                        <h1 class="text-2xl md:text-3xl font-bold mb-6 text-white">訂閱者管理</h1>
+                        <div class="bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg overflow-x-auto">
+                            <table class="w-full text-left min-w-[600px]">
                                 <thead class="border-b border-gray-700">
                                     <tr>
                                         <th class="p-3">電子郵件</th>
@@ -102,14 +113,14 @@
                     </div>
                     <!-- Shops Content -->
                     <div id="shops-content" class="tab-pane hidden">
-                        <div class="flex justify-between items-center mb-6">
-                            <h1 class="text-3xl font-bold text-white">店家管理</h1>
-                            <button id="add-shop-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                        <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
+                            <h1 class="text-2xl md:text-3xl font-bold text-white">店家管理</h1>
+                            <button id="add-shop-btn" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">
                                 <i class="fas fa-plus mr-2"></i> 新增店家
                             </button>
                         </div>
-                         <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-                            <table class="w-full text-left">
+                         <div class="bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg overflow-x-auto">
+                            <table class="w-full text-left min-w-[700px]">
                                 <thead class="border-b border-gray-700">
                                     <tr>
                                         <th class="p-3">ID</th>
@@ -125,7 +136,7 @@
                     </div>
                     <!-- Content (Announcements/Policies) Content -->
                     <div id="content-content" class="tab-pane hidden">
-                        <h1 class="text-3xl font-bold mb-6 text-white">公告與政策管理</h1>
+                        <h1 class="text-2xl md:text-3xl font-bold mb-6 text-white">公告與政策管理</h1>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <!-- Announcements -->
                             <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
@@ -158,13 +169,14 @@
 
     <!-- Shop Edit Modal -->
     <div id="shop-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
             <h2 id="shop-modal-title" class="text-2xl font-bold mb-6 text-green-400">編輯店家</h2>
-            <form id="shop-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <form id="shop-form">
                 <input type="hidden" id="shop-id">
+                <div id="shop-form-fields" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <!-- Dynamically generated fields will be injected here -->
+                </div>
             </form>
-            <div id="shop-form-fields" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"></div>
              <div class="flex justify-end space-x-4 mt-8">
                 <button type="button" id="cancel-shop-edit" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg transition">取消</button>
                 <button type="button" id="save-shop-btn" class="px-6 py-2 bg-green-600 hover:bg-green-500 rounded-lg transition">儲存</button>
@@ -187,7 +199,10 @@
         const logoutButton = document.getElementById('logout-button');
         const tabLinks = document.querySelectorAll('.tab-link');
         const tabPanes = document.querySelectorAll('.tab-pane');
-        
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const closeSidebarButton = document.getElementById('close-sidebar-button');
+        const sidebar = document.getElementById('sidebar');
+
         // =================================================================
         // API CALLER
         // =================================================================
@@ -201,7 +216,6 @@
             try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    // [🔧 FIXED] Added redirect and headers for better compatibility
                     redirect: "follow",
                     body: JSON.stringify({ action, token, ...payload }),
                     headers: { "Content-Type": "text/plain;charset=utf-8" }
@@ -225,7 +239,7 @@
         };
         
         // =================================================================
-        // AUTHENTICATION
+        // AUTHENTICATION & UI TOGGLES
         // =================================================================
         
         loginForm.addEventListener('submit', async (e) => {
@@ -257,8 +271,16 @@
             loginScreen.classList.add('hidden');
             dashboardScreen.classList.remove('hidden');
             loadDashboardStats();
-            switchTab('dashboard'); // Default to dashboard tab
+            switchTab('dashboard');
         }
+        
+        // Mobile Menu Toggles
+        mobileMenuButton.addEventListener('click', () => {
+            sidebar.classList.remove('-translate-x-full');
+        });
+        closeSidebarButton.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+        });
         
         // Check for token on page load
         if (localStorage.getItem('jwtToken')) {
@@ -274,6 +296,10 @@
                 e.preventDefault();
                 const tabName = link.dataset.tab;
                 switchTab(tabName);
+                // Close sidebar on mobile after navigation
+                if (window.innerWidth < 1024) {
+                    sidebar.classList.add('-translate-x-full');
+                }
             });
         });
 
@@ -287,18 +313,10 @@
 
             // Load content for the selected tab
             switch (tabName) {
-                case 'dashboard':
-                    loadDashboardStats();
-                    break;
-                case 'subscribers':
-                    loadSubscribers();
-                    break;
-                case 'shops':
-                    loadShops();
-                    break;
-                case 'content':
-                    loadContent();
-                    break;
+                case 'dashboard': loadDashboardStats(); break;
+                case 'subscribers': loadSubscribers(); break;
+                case 'shops': loadShops(); break;
+                case 'content': loadContent(); break;
             }
         }
         
@@ -312,9 +330,7 @@
                 document.getElementById('subscriber-count').textContent = stats.subscriberCount;
                 document.getElementById('shop-count').textContent = stats.shopCount;
                 document.getElementById('feedback-count').textContent = stats.feedbackCount;
-            } catch (error) {
-                // Error already handled by apiCall
-            }
+            } catch (error) {}
         }
 
         async function loadSubscribers() {
@@ -342,9 +358,7 @@
                     await apiCall('deleteSubscriber', { email });
                     alert('刪除成功');
                     loadSubscribers();
-                } catch (error) {
-                    // Error handled by apiCall
-                }
+                } catch (error) {}
             }
         }
         
@@ -376,7 +390,7 @@
                     await apiCall('deleteShop', { id });
                     alert('刪除成功');
                     loadShops();
-                } catch(error) { /* Handled by apiCall */ }
+                } catch(error) {}
             }
         }
         
@@ -394,9 +408,7 @@
                        document.getElementById(`policy-${key}`).value = policy.value;
                    }
                 });
-            } catch (error) {
-                // Error handled
-            }
+            } catch (error) {}
         }
 
         document.getElementById('save-announcements-btn').addEventListener('click', async () => {
@@ -404,7 +416,7 @@
             try {
                 await apiCall('setAnnouncements', { announcements });
                 alert('公告儲存成功');
-            } catch (error) { /* Handled */ }
+            } catch (error) {}
         });
 
         async function savePolicy(policyKey) {
@@ -412,7 +424,7 @@
             try {
                 await apiCall('setPolicy', { key: policyKey, value: content });
                 alert(`${policyKey === 'privacy' ? '隱私權政策' : '免責聲明'} 儲存成功`);
-            } catch (error) { /* Handled */ }
+            } catch (error) {}
         }
 
         // =================================================================
@@ -479,7 +491,7 @@
                     document.getElementById(`shop-${field.key}`).value = shop[field.key] || '';
                 });
                 shopModal.classList.remove('hidden');
-            } catch(error) { /* Handled */ }
+            } catch(error) {}
         }
 
         document.getElementById('cancel-shop-edit').addEventListener('click', () => {
@@ -507,8 +519,9 @@
                 alert('店家資料儲存成功');
                 shopModal.classList.add('hidden');
                 loadShops();
-            } catch(error) { /* Handled */ }
+            } catch(error) {}
         });
     </script>
 </body>
 </html>
+
