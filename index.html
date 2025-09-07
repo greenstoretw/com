@@ -47,7 +47,7 @@
             </header>
 
             <!-- Sidebar -->
-            <aside id="sidebar" class="w-64 bg-gray-800 text-gray-300 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out z-50">
+            <aside id="sidebar" class="w-64 bg-gray-800 text-gray-300 flex-shrink-0 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out z-50">
                 <div class="p-4 text-2xl font-bold text-white border-b border-gray-700 flex items-center justify-between">
                     <span><i class="fas fa-leaf text-green-400"></i> 管理選單</span>
                     <button id="close-sidebar-button" class="lg:hidden p-2 focus:outline-none">
@@ -119,6 +119,16 @@
                                 <i class="fas fa-plus mr-2"></i> 新增店家
                             </button>
                         </div>
+                        <!-- Search and Filter Controls -->
+                        <div class="mb-4 flex flex-col md:flex-row gap-4">
+                            <div class="relative flex-grow">
+                                <input type="text" id="shop-search-input" placeholder="搜尋ID、名稱、地址..." class="w-full bg-gray-700 text-white placeholder-gray-400 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            </div>
+                            <select id="shop-type-filter" class="bg-gray-700 text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="all">所有類型</option>
+                            </select>
+                        </div>
                          <div class="bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg overflow-x-auto">
                             <table class="w-full text-left min-w-[700px]">
                                 <thead class="border-b border-gray-700">
@@ -188,7 +198,12 @@
         // =================================================================
         // CONFIGURATION
         // =================================================================
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyQz6D5P90b4d45p6QN_J5iUaIpjU0Xz6P5eF8B8D7k9R6J3s9S9a7Z8c7K6v5B4N3d/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzIcS0WXSQV0yNt5lyjvHy7hwDIUItkGeG78T_Yz2mKa83HJMgI9UxsfVIelU6PyKFwkw/exec';
+        
+        // =================================================================
+        // STATE VARIABLES
+        // =================================================================
+        let allAdminShops = [];
         
         // =================================================================
         // DOM ELEMENTS
@@ -202,6 +217,9 @@
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const closeSidebarButton = document.getElementById('close-sidebar-button');
         const sidebar = document.getElementById('sidebar');
+        const shopSearchInput = document.getElementById('shop-search-input');
+        const shopTypeFilter = document.getElementById('shop-type-filter');
+
 
         // =================================================================
         // API CALLER
@@ -217,6 +235,7 @@
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     redirect: "follow",
+                    // Google Apps Script 的 fetch 需要 text/plain 格式
                     body: JSON.stringify({ action, token, ...payload }),
                     headers: { "Content-Type": "text/plain;charset=utf-8" }
                 });
@@ -224,6 +243,7 @@
                 const result = await response.json();
                 
                 if (result.status === 'error') {
+                    // 如果是 token 相關錯誤，直接導向登入頁
                     if (result.message.includes('token')) {
                         showLoginScreen();
                     }
@@ -239,9 +259,14 @@
         };
         
         // =================================================================
-        // AUTHENTICATION & UI TOGGLES
+        // INITIALIZATION & EVENT LISTENERS
         // =================================================================
         
+        // Check for token on page load
+        if (localStorage.getItem('jwtToken')) {
+            showDashboardScreen();
+        }
+
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const password = document.getElementById('password').value;
@@ -261,7 +286,32 @@
             localStorage.removeItem('jwtToken');
             showLoginScreen();
         });
+        
+        // Mobile Menu Toggles
+        mobileMenuButton.addEventListener('click', () => sidebar.classList.remove('-translate-x-full'));
+        closeSidebarButton.addEventListener('click', () => sidebar.classList.add('-translate-x-full'));
+        
+        // Tab Navigation
+        tabLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tabName = link.dataset.tab;
+                switchTab(tabName);
+                if (window.innerWidth < 1024) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        });
 
+        // Shop Filter Listeners
+        shopSearchInput.addEventListener('input', filterAndRenderShops);
+        shopTypeFilter.addEventListener('change', filterAndRenderShops);
+
+
+        // =================================================================
+        // UI & NAVIGATION
+        // =================================================================
+        
         function showLoginScreen() {
             loginScreen.classList.remove('hidden');
             dashboardScreen.classList.add('hidden');
@@ -273,45 +323,16 @@
             loadDashboardStats();
             switchTab('dashboard');
         }
-        
-        // Mobile Menu Toggles
-        mobileMenuButton.addEventListener('click', () => {
-            sidebar.classList.remove('-translate-x-full');
-        });
-        closeSidebarButton.addEventListener('click', () => {
-            sidebar.classList.add('-translate-x-full');
-        });
-        
-        // Check for token on page load
-        if (localStorage.getItem('jwtToken')) {
-            showDashboardScreen();
-        }
-
-        // =================================================================
-        // TAB NAVIGATION
-        // =================================================================
-
-        tabLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const tabName = link.dataset.tab;
-                switchTab(tabName);
-                // Close sidebar on mobile after navigation
-                if (window.innerWidth < 1024) {
-                    sidebar.classList.add('-translate-x-full');
-                }
-            });
-        });
 
         function switchTab(tabName) {
             tabLinks.forEach(link => {
                 link.classList.toggle('tab-active', link.dataset.tab === tabName);
+                link.classList.toggle('bg-gray-700', link.dataset.tab === tabName);
             });
             tabPanes.forEach(pane => {
                 pane.classList.toggle('hidden', pane.id !== `${tabName}-content`);
             });
 
-            // Load content for the selected tab
             switch (tabName) {
                 case 'dashboard': loadDashboardStats(); break;
                 case 'subscribers': loadSubscribers(); break;
@@ -367,21 +388,59 @@
              tableBody.innerHTML = '<tr><td colspan="5" class="p-3 text-center">載入中...</td></tr>';
              try {
                 const shops = await apiCall('getShops');
-                tableBody.innerHTML = shops.map(shop => `
-                    <tr class="border-b border-gray-700 hover:bg-gray-700">
-                        <td class="p-3 font-mono text-sm">${shop.id}</td>
-                        <td class="p-3 font-bold">${shop.name_zh_TW}</td>
-                        <td class="p-3">${shop.type_zh_TW}</td>
-                        <td class="p-3">${shop.address_zh_TW}</td>
-                        <td class="p-3 space-x-2">
-                            <button onclick="editShop('${shop.id}')" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit"></i></button>
-                            <button onclick="deleteShop('${shop.id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
+                allAdminShops = shops;
+                populateShopFilter();
+                renderShopsTable(allAdminShops);
             } catch (error) {
                 tableBody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-red-400">無法載入店家資料</td></tr>';
             }
+        }
+
+        function populateShopFilter() {
+            const types = [...new Set(allAdminShops.map(shop => shop['type_zh-TW']).filter(Boolean))].sort();
+            shopTypeFilter.innerHTML = '<option value="all">所有類型</option>';
+            types.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                shopTypeFilter.appendChild(option);
+            });
+        }
+
+        function renderShopsTable(shops) {
+            const tableBody = document.getElementById('shops-table');
+            if (shops.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="p-3 text-center">找不到符合條件的店家</td></tr>';
+                return;
+            }
+            tableBody.innerHTML = shops.map(shop => `
+                <tr class="border-b border-gray-700 hover:bg-gray-700">
+                    <td class="p-3 font-mono text-sm">${shop.id}</td>
+                    <td class="p-3 font-bold">${shop['name_zh-TW']}</td>
+                    <td class="p-3">${shop['type_zh-TW']}</td>
+                    <td class="p-3">${shop['address_zh-TW']}</td>
+                    <td class="p-3 space-x-2">
+                        <button onclick="editShop('${shop.id}')" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteShop('${shop.id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function filterAndRenderShops() {
+            const searchTerm = shopSearchInput.value.toLowerCase();
+            const selectedType = shopTypeFilter.value;
+
+            const filteredShops = allAdminShops.filter(shop => {
+                const matchesSearch = (shop.id?.toLowerCase() || '').includes(searchTerm) ||
+                                      (shop['name_zh-TW']?.toLowerCase() || '').includes(searchTerm) ||
+                                      (shop['address_zh-TW']?.toLowerCase() || '').includes(searchTerm);
+
+                const matchesType = selectedType === 'all' || shop['type_zh-TW'] === selectedType;
+
+                return matchesSearch && matchesType;
+            });
+            renderShopsTable(filteredShops);
         }
 
         async function deleteShop(id) {
@@ -389,7 +448,7 @@
                 try {
                     await apiCall('deleteShop', { id });
                     alert('刪除成功');
-                    loadShops();
+                    loadShops(); // Reload all shops
                 } catch(error) {}
             }
         }
@@ -447,8 +506,8 @@
             { key: 'phone', label: '電話', type: 'text' },
             { key: 'email', label: '電子郵件', type: 'email' },
             { key: 'website', label: '網站', type: 'text' },
-            { key: 'lat', label: '緯度', type: 'number' },
-            { key: 'lng', label: '經度', type: 'number' },
+            { key: 'lat', label: '緯度 (Lat)', type: 'number', required: true },
+            { key: 'lng', label: '經度 (Lng)', type: 'number', required: true },
             { key: 'description_zh-TW', label: '中文簡短描述', type: 'textarea' },
             { key: 'description_en', label: '英文簡短描述', type: 'textarea' },
             { key: 'longDescription_zh-TW', label: '中文詳細描述', type: 'textarea' },
@@ -459,15 +518,14 @@
             { key: 'tags_en', label: '英文標籤 (逗號分隔)', type: 'text' },
         ];
         
-        // Build the form fields once
         shopFormFields.innerHTML = shopFieldDefinitions.map(field => {
             const inputHtml = field.type === 'textarea'
-                ? `<textarea id="shop-${field.key}" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>`
-                : `<input type="${field.type}" step="any" id="shop-${field.key}" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500" ${field.required ? 'required' : ''}>`;
+                ? `<textarea id="shop-${field.key.replace('_','-')}" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>`
+                : `<input type="${field.type}" step="any" id="shop-${field.key.replace('_','-')}" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500" ${field.required ? 'required' : ''}>`;
             
             return `
                 <div class="${field.type === 'textarea' ? 'md:col-span-2' : ''}">
-                    <label for="shop-${field.key}" class="block text-gray-400 mb-2">${field.label}${field.required ? ' *' : ''}</label>
+                    <label for="shop-${field.key.replace('_','-')}" class="block text-gray-400 mb-2">${field.label}${field.required ? ' *' : ''}</label>
                     ${inputHtml}
                 </div>
             `;
@@ -477,10 +535,10 @@
             shopModalTitle.textContent = '新增店家';
             shopIdField.value = '';
             shopFieldDefinitions.forEach(field => {
-                document.getElementById(`shop-${field.key}`).value = '';
+                document.getElementById(`shop-${field.key.replace('_','-')}`).value = '';
             });
             shopModal.classList.remove('hidden');
-        });
+});
 
         async function editShop(id) {
             shopModalTitle.textContent = '編輯店家';
@@ -488,7 +546,7 @@
             try {
                 const shop = await apiCall('getShopById', { id });
                 shopFieldDefinitions.forEach(field => {
-                    document.getElementById(`shop-${field.key}`).value = shop[field.key] || '';
+                    document.getElementById(`shop-${field.key.replace('_','-')}`).value = shop[field.key] || '';
                 });
                 shopModal.classList.remove('hidden');
             } catch(error) {}
@@ -502,7 +560,7 @@
             const shopData = { id: shopIdField.value };
             let isValid = true;
             shopFieldDefinitions.forEach(field => {
-                const input = document.getElementById(`shop-${field.key}`);
+                const input = document.getElementById(`shop-${field.key.replace('_','-')}`);
                 if (field.required && !input.value) {
                     isValid = false;
                 }
