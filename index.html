@@ -16,6 +16,16 @@
             border-bottom: 2px solid #4ade80; /* green-400 */
             color: #4ade80;
         }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-new { background-color: #3b82f6; color: white; }
+        .status-read { background-color: #f59e0b; color: white; }
+        .status-resolved { background-color: #10b981; color: white; }
     </style>
 </head>
 <body class="bg-gray-800 text-gray-200 font-sans">
@@ -63,6 +73,9 @@
                     </a>
                     <a href="#" data-tab="shops" class="tab-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition">
                         <i class="fas fa-store fa-fw mr-3"></i> 店家管理
+                    </a>
+                    <a href="#" data-tab="feedback" class="tab-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-flag fa-fw mr-3"></i> 回報管理
                     </a>
                     <a href="#" data-tab="content" class="tab-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition">
                         <i class="fas fa-file-alt fa-fw mr-3"></i> 公告與政策
@@ -113,13 +126,12 @@
                     </div>
                     <!-- Shops Content -->
                     <div id="shops-content" class="tab-pane hidden">
-                        <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
+                         <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
                             <h1 class="text-2xl md:text-3xl font-bold text-white">店家管理</h1>
                             <button id="add-shop-btn" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">
                                 <i class="fas fa-plus mr-2"></i> 新增店家
                             </button>
                         </div>
-                        <!-- Search and Filter Controls -->
                         <div class="mb-4 flex flex-col md:flex-row gap-4">
                             <div class="relative flex-grow">
                                 <input type="text" id="shop-search-input" placeholder="搜尋ID、名稱、地址..." class="w-full bg-gray-700 text-white placeholder-gray-400 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-green-500">
@@ -144,29 +156,48 @@
                             </table>
                         </div>
                     </div>
+                    <!-- Feedback Content -->
+                    <div id="feedback-content" class="tab-pane hidden">
+                        <h1 class="text-2xl md:text-3xl font-bold mb-6 text-white">回報管理</h1>
+                        <div class="bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left min-w-[800px]">
+                                    <thead class="border-b border-gray-700">
+                                        <tr>
+                                            <th class="p-3">時間</th>
+                                            <th class="p-3">店家</th>
+                                            <th class="p-3">類型</th>
+                                            <th class="p-3">內容</th>
+                                            <th class="p-3">狀態</th>
+                                            <th class="p-3">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="feedback-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Content (Announcements/Policies) Content -->
                     <div id="content-content" class="tab-pane hidden">
                         <h1 class="text-2xl md:text-3xl font-bold mb-6 text-white">公告與政策管理</h1>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Announcements -->
                             <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
                                 <h2 class="text-xl font-bold mb-4">網站公告</h2>
                                 <textarea id="announcements-text" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
                                 <button id="save-announcements-btn" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">儲存公告</button>
                             </div>
-                            <!-- Policies -->
                             <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
                                 <h2 class="text-xl font-bold mb-4">政策內容</h2>
                                 <div class="space-y-4">
                                     <div>
                                         <label class="font-bold">隱私權政策</label>
                                         <textarea id="policy-privacy" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
-                                        <button onclick="savePolicy('privacy')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">儲存隱私權政策</button>
+                                        <button onclick="savePolicy('privacy')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">儲存</button>
                                     </div>
                                     <div>
                                         <label class="font-bold">免責聲明</label>
                                         <textarea id="policy-disclaimer" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
-                                        <button onclick="savePolicy('disclaimer')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">儲存免責聲明</button>
+                                        <button onclick="savePolicy('disclaimer')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">儲存</button>
                                     </div>
                                 </div>
                             </div>
@@ -180,12 +211,10 @@
     <!-- Shop Edit Modal -->
     <div id="shop-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
         <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
-            <h2 id="shop-modal-title" class="text-2xl font-bold mb-6 text-green-400">編輯店家</h2>
+            <h2 id="shop-modal-title" class="text-2xl font-bold mb-6 text-green-400"></h2>
             <form id="shop-form">
                 <input type="hidden" id="shop-id">
-                <div id="shop-form-fields" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                <!-- Dynamically generated fields will be injected here -->
-                </div>
+                <div id="shop-form-fields" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"></div>
             </form>
              <div class="flex justify-end space-x-4 mt-8">
                 <button type="button" id="cancel-shop-edit" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg transition">取消</button>
@@ -196,395 +225,96 @@
     
     <script>
         // =================================================================
-        // CONFIGURATION
+        // CONFIGURATION & STATE
         // =================================================================
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzIcS0WXSQV0yNt5lyjvHy7hwDIUItkGeG78T_Yz2mKa83HJMgI9UxsfVIelU6PyKFwkw/exec';
-        
-        // =================================================================
-        // STATE VARIABLES
-        // =================================================================
         let allAdminShops = [];
-        
-        // =================================================================
-        // DOM ELEMENTS
-        // =================================================================
-        const loginScreen = document.getElementById('login-screen');
-        const dashboardScreen = document.getElementById('dashboard-screen');
-        const loginForm = document.getElementById('login-form');
-        const logoutButton = document.getElementById('logout-button');
-        const tabLinks = document.querySelectorAll('.tab-link');
-        const tabPanes = document.querySelectorAll('.tab-pane');
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const closeSidebarButton = document.getElementById('close-sidebar-button');
-        const sidebar = document.getElementById('sidebar');
-        const shopSearchInput = document.getElementById('shop-search-input');
-        const shopTypeFilter = document.getElementById('shop-type-filter');
-
+        const loginScreen = document.getElementById('login-screen'), dashboardScreen = document.getElementById('dashboard-screen');
+        const loginForm = document.getElementById('login-form'), logoutButton = document.getElementById('logout-button');
+        const tabLinks = document.querySelectorAll('.tab-link'), tabPanes = document.querySelectorAll('.tab-pane');
+        const mobileMenuButton = document.getElementById('mobile-menu-button'), closeSidebarButton = document.getElementById('close-sidebar-button'), sidebar = document.getElementById('sidebar');
+        const shopSearchInput = document.getElementById('shop-search-input'), shopTypeFilter = document.getElementById('shop-type-filter');
 
         // =================================================================
         // API CALLER
         // =================================================================
         const apiCall = async (action, payload = {}) => {
             const token = localStorage.getItem('jwtToken');
-            if (!token && action !== 'login') {
-                showLoginScreen();
-                throw new Error('No token found');
-            }
-
+            if (!token && action !== 'login') { showLoginScreen(); throw new Error('No token found'); }
             try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    redirect: "follow",
-                    // Google Apps Script 的 fetch 需要 text/plain 格式
-                    body: JSON.stringify({ action, token, ...payload }),
-                    headers: { "Content-Type": "text/plain;charset=utf-8" }
-                });
-
+                const response = await fetch(SCRIPT_URL, { method: 'POST', redirect: "follow", body: JSON.stringify({ action, token, ...payload }), headers: { "Content-Type": "text/plain;charset=utf-8" } });
                 const result = await response.json();
-                
-                if (result.status === 'error') {
-                    // 如果是 token 相關錯誤，直接導向登入頁
-                    if (result.message.includes('token')) {
-                        showLoginScreen();
-                    }
-                    throw new Error(result.message);
-                }
+                if (result.status === 'error') { if (result.message.includes('token')) { showLoginScreen(); } throw new Error(result.message); }
                 return result.data;
-
-            } catch (error) {
-                console.error(`API call failed for action "${action}":`, error);
-                alert(`操作失敗: ${error.message}`);
-                throw error;
-            }
+            } catch (error) { console.error(`API call failed for action "${action}":`, error); alert(`操作失敗: ${error.message}`); throw error; }
         };
         
         // =================================================================
         // INITIALIZATION & EVENT LISTENERS
         // =================================================================
-        
-        // Check for token on page load
-        if (localStorage.getItem('jwtToken')) {
-            showDashboardScreen();
-        }
-
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const password = document.getElementById('password').value;
-            const loginError = document.getElementById('login-error');
-            loginError.textContent = '';
-            
-            try {
-                const data = await apiCall('login', { password });
-                localStorage.setItem('jwtToken', data.token);
-                showDashboardScreen();
-            } catch (error) {
-                loginError.textContent = `登入失敗：${error.message}`;
-            }
-        });
-
-        logoutButton.addEventListener('click', () => {
-            localStorage.removeItem('jwtToken');
-            showLoginScreen();
-        });
-        
-        // Mobile Menu Toggles
+        if (localStorage.getItem('jwtToken')) { showDashboardScreen(); }
+        loginForm.addEventListener('submit', async (e) => { e.preventDefault(); const p = document.getElementById('password').value, err = document.getElementById('login-error'); err.textContent = ''; try { const d = await apiCall('login', { password: p }); localStorage.setItem('jwtToken', d.token); showDashboardScreen(); } catch (error) { err.textContent = `登入失敗：${error.message}`; } });
+        logoutButton.addEventListener('click', () => { localStorage.removeItem('jwtToken'); showLoginScreen(); });
         mobileMenuButton.addEventListener('click', () => sidebar.classList.remove('-translate-x-full'));
         closeSidebarButton.addEventListener('click', () => sidebar.classList.add('-translate-x-full'));
-        
-        // Tab Navigation
-        tabLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const tabName = link.dataset.tab;
-                switchTab(tabName);
-                if (window.innerWidth < 1024) {
-                    sidebar.classList.add('-translate-x-full');
-                }
-            });
-        });
-
-        // Shop Filter Listeners
+        tabLinks.forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); switchTab(link.dataset.tab); if (window.innerWidth < 1024) sidebar.classList.add('-translate-x-full'); }); });
         shopSearchInput.addEventListener('input', filterAndRenderShops);
         shopTypeFilter.addEventListener('change', filterAndRenderShops);
-
 
         // =================================================================
         // UI & NAVIGATION
         // =================================================================
-        
-        function showLoginScreen() {
-            loginScreen.classList.remove('hidden');
-            dashboardScreen.classList.add('hidden');
-        }
-
-        function showDashboardScreen() {
-            loginScreen.classList.add('hidden');
-            dashboardScreen.classList.remove('hidden');
-            loadDashboardStats();
-            switchTab('dashboard');
-        }
-
+        function showLoginScreen() { loginScreen.classList.remove('hidden'); dashboardScreen.classList.add('hidden'); }
+        function showDashboardScreen() { loginScreen.classList.add('hidden'); dashboardScreen.classList.remove('hidden'); loadDashboardStats(); switchTab('dashboard'); }
         function switchTab(tabName) {
-            tabLinks.forEach(link => {
-                link.classList.toggle('tab-active', link.dataset.tab === tabName);
-                link.classList.toggle('bg-gray-700', link.dataset.tab === tabName);
-            });
-            tabPanes.forEach(pane => {
-                pane.classList.toggle('hidden', pane.id !== `${tabName}-content`);
-            });
-
-            switch (tabName) {
-                case 'dashboard': loadDashboardStats(); break;
-                case 'subscribers': loadSubscribers(); break;
-                case 'shops': loadShops(); break;
-                case 'content': loadContent(); break;
-            }
+            tabLinks.forEach(l => { l.classList.toggle('tab-active', l.dataset.tab === tabName); l.classList.toggle('bg-gray-700', l.dataset.tab === tabName); });
+            tabPanes.forEach(p => { p.classList.toggle('hidden', p.id !== `${tabName}-content`); });
+            const actions = { dashboard: loadDashboardStats, subscribers: loadSubscribers, shops: loadShops, content: loadContent, feedback: loadFeedback };
+            if (actions[tabName]) actions[tabName]();
         }
         
         // =================================================================
-        // DATA LOADING & RENDERING
+        // DATA LOADING & RENDERING FUNCTIONS
         // =================================================================
-
-        async function loadDashboardStats() {
-            try {
-                const stats = await apiCall('getDashboardStats');
-                document.getElementById('subscriber-count').textContent = stats.subscriberCount;
-                document.getElementById('shop-count').textContent = stats.shopCount;
-                document.getElementById('feedback-count').textContent = stats.feedbackCount;
-            } catch (error) {}
-        }
-
-        async function loadSubscribers() {
-            const tableBody = document.getElementById('subscribers-table');
-            tableBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center">載入中...</td></tr>';
-            try {
-                const subscribers = await apiCall('getSubscribers');
-                tableBody.innerHTML = subscribers.map(sub => `
-                    <tr class="border-b border-gray-700 hover:bg-gray-700">
-                        <td class="p-3">${sub.email}</td>
-                        <td class="p-3">${new Date(sub.timestamp).toLocaleString()}</td>
-                        <td class="p-3">
-                            <button onclick="deleteSubscriber('${sub.email}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-red-400">無法載入訂閱者資料</td></tr>';
-            }
-        }
-
-        async function deleteSubscriber(email) {
-            if (confirm(`確定要刪除訂閱者 ${email} 嗎？`)) {
-                try {
-                    await apiCall('deleteSubscriber', { email });
-                    alert('刪除成功');
-                    loadSubscribers();
-                } catch (error) {}
-            }
-        }
-        
-        async function loadShops() {
-             const tableBody = document.getElementById('shops-table');
-             tableBody.innerHTML = '<tr><td colspan="5" class="p-3 text-center">載入中...</td></tr>';
-             try {
-                const shops = await apiCall('getShops');
-                allAdminShops = shops;
-                populateShopFilter();
-                renderShopsTable(allAdminShops);
-            } catch (error) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-red-400">無法載入店家資料</td></tr>';
-            }
-        }
-
-        function populateShopFilter() {
-            const types = [...new Set(allAdminShops.map(shop => shop['type_zh-TW']).filter(Boolean))].sort();
-            shopTypeFilter.innerHTML = '<option value="all">所有類型</option>';
-            types.forEach(type => {
-                const option = document.createElement('option');
-                option.value = type;
-                option.textContent = type;
-                shopTypeFilter.appendChild(option);
-            });
-        }
-
-        function renderShopsTable(shops) {
-            const tableBody = document.getElementById('shops-table');
-            if (shops.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="p-3 text-center">找不到符合條件的店家</td></tr>';
-                return;
-            }
-            tableBody.innerHTML = shops.map(shop => `
-                <tr class="border-b border-gray-700 hover:bg-gray-700">
-                    <td class="p-3 font-mono text-sm">${shop.id}</td>
-                    <td class="p-3 font-bold">${shop['name_zh-TW']}</td>
-                    <td class="p-3">${shop['type_zh-TW']}</td>
-                    <td class="p-3">${shop['address_zh-TW']}</td>
-                    <td class="p-3 space-x-2">
-                        <button onclick="editShop('${shop.id}')" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteShop('${shop.id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-        
-        function filterAndRenderShops() {
-            const searchTerm = shopSearchInput.value.toLowerCase();
-            const selectedType = shopTypeFilter.value;
-
-            const filteredShops = allAdminShops.filter(shop => {
-                const matchesSearch = (shop.id?.toLowerCase() || '').includes(searchTerm) ||
-                                      (shop['name_zh-TW']?.toLowerCase() || '').includes(searchTerm) ||
-                                      (shop['address_zh-TW']?.toLowerCase() || '').includes(searchTerm);
-
-                const matchesType = selectedType === 'all' || shop['type_zh-TW'] === selectedType;
-
-                return matchesSearch && matchesType;
-            });
-            renderShopsTable(filteredShops);
-        }
-
-        async function deleteShop(id) {
-            if (confirm(`確定要刪除店家 ID: ${id} 嗎？`)) {
-                try {
-                    await apiCall('deleteShop', { id });
-                    alert('刪除成功');
-                    loadShops(); // Reload all shops
-                } catch(error) {}
-            }
-        }
-        
-        async function loadContent() {
-            try {
-                const [announcements, policies] = await Promise.all([
-                    apiCall('getAnnouncements'),
-                    apiCall('getPolicies')
-                ]);
-                document.getElementById('announcements-text').value = announcements;
-                
-                policies.forEach(policy => {
-                   const key = policy.key.trim();
-                   if (document.getElementById(`policy-${key}`)){
-                       document.getElementById(`policy-${key}`).value = policy.value;
-                   }
-                });
-            } catch (error) {}
-        }
-
-        document.getElementById('save-announcements-btn').addEventListener('click', async () => {
-            const announcements = document.getElementById('announcements-text').value;
-            try {
-                await apiCall('setAnnouncements', { announcements });
-                alert('公告儲存成功');
-            } catch (error) {}
-        });
-
-        async function savePolicy(policyKey) {
-            const content = document.getElementById(`policy-${policyKey}`).value;
-            try {
-                await apiCall('setPolicy', { key: policyKey, value: content });
-                alert(`${policyKey === 'privacy' ? '隱私權政策' : '免責聲明'} 儲存成功`);
-            } catch (error) {}
-        }
+        async function loadDashboardStats() { try { const s = await apiCall('getDashboardStats'); document.getElementById('subscriber-count').textContent = s.subscriberCount; document.getElementById('shop-count').textContent = s.shopCount; document.getElementById('feedback-count').textContent = s.feedbackCount; } catch (e) {} }
+        async function loadSubscribers() { const t = document.getElementById('subscribers-table'); t.innerHTML = '<tr><td colspan="3" class="p-3 text-center">載入中...</td></tr>'; try { const subs = await apiCall('getSubscribers'); t.innerHTML = subs.map(s => ` <tr class="border-b border-gray-700 hover:bg-gray-700"> <td class="p-3">${s.email}</td> <td class="p-3">${new Date(s.timestamp).toLocaleString()}</td> <td class="p-3"> <button onclick="deleteSubscriber('${s.email}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button> </td> </tr> `).join(''); } catch (e) { t.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-red-400">無法載入訂閱者資料</td></tr>'; } }
+        async function deleteSubscriber(email) { if (confirm(`確定要刪除訂閱者 ${email} 嗎？`)) { try { await apiCall('deleteSubscriber', { email }); alert('刪除成功'); loadSubscribers(); } catch (e) {} } }
+        async function loadShops() { const t = document.getElementById('shops-table'); t.innerHTML = '<tr><td colspan="5" class="p-3 text-center">載入中...</td></tr>'; try { allAdminShops = await apiCall('getShops'); populateShopFilter(); renderShopsTable(allAdminShops); } catch (e) { t.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-red-400">無法載入店家資料</td></tr>'; } }
+        function populateShopFilter() { const types = [...new Set(allAdminShops.map(s => s['type_zh-TW']).filter(Boolean))].sort(); shopTypeFilter.innerHTML = '<option value="all">所有類型</option>'; types.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; shopTypeFilter.appendChild(o); }); }
+        function renderShopsTable(shops) { const t = document.getElementById('shops-table'); if (shops.length === 0) { t.innerHTML = '<tr><td colspan="5" class="p-3 text-center">找不到符合條件的店家</td></tr>'; return; } t.innerHTML = shops.map(s => ` <tr class="border-b border-gray-700 hover:bg-gray-700"> <td class="p-3 font-mono text-sm">${s.id}</td> <td class="p-3 font-bold">${s['name_zh-TW']}</td> <td class="p-3">${s['type_zh-TW']}</td> <td class="p-3">${s['address_zh-TW']}</td> <td class="p-3 space-x-2"> <button onclick="editShop('${s.id}')" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit"></i></button> <button onclick="deleteShop('${s.id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button> </td> </tr> `).join(''); }
+        function filterAndRenderShops() { const st = shopSearchInput.value.toLowerCase(), stype = shopTypeFilter.value; renderShopsTable(allAdminShops.filter(s => ((s.id?.toLowerCase() || '').includes(st) || (s['name_zh-TW']?.toLowerCase() || '').includes(st) || (s['address_zh-TW']?.toLowerCase() || '').includes(st)) && (stype === 'all' || s['type_zh-TW'] === stype))); }
+        async function deleteShop(id) { if (confirm(`確定要刪除店家 ID: ${id} 嗎？`)) { try { await apiCall('deleteShop', { id }); alert('刪除成功'); loadShops(); } catch(e) {} } }
+        async function loadContent() { try { const [a, p] = await Promise.all([apiCall('getAnnouncements'), apiCall('getPolicies')]); document.getElementById('announcements-text').value = a; p.forEach(pol => { const k = pol.key.trim(); if(document.getElementById(`policy-${k}`)) document.getElementById(`policy-${k}`).value = pol.value; }); } catch (e) {} }
+        document.getElementById('save-announcements-btn').addEventListener('click', async () => { const a = document.getElementById('announcements-text').value; try { await apiCall('setAnnouncements', { announcements: a }); alert('公告儲存成功'); } catch (e) {} });
+        async function savePolicy(key) { const c = document.getElementById(`policy-${key}`).value; try { await apiCall('setPolicy', { key, value: c }); alert(`${key === 'privacy' ? '隱私權政策' : '免責聲明'} 儲存成功`); } catch (e) {} }
+        async function loadFeedback() { const t = document.getElementById('feedback-table'); t.innerHTML = '<tr><td colspan="6" class="p-3 text-center">載入中...</td></tr>'; try { const f = await apiCall('getFeedback'); renderFeedbackTable(f); } catch (e) { t.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-red-400">無法載入回報資料</td></tr>'; } }
+        function renderFeedbackTable(feedbacks) { const t = document.getElementById('feedback-table'), sm = { new: '新的', read: '已讀', resolved: '已解決' }, sc = { new: 'status-new', read: 'status-read', resolved: 'status-resolved' }; if (feedbacks.length === 0) { t.innerHTML = '<tr><td colspan="6" class="p-3 text-center">沒有回報紀錄</td></tr>'; return; } t.innerHTML = feedbacks.map(f => ` <tr class="border-b border-gray-700 hover:bg-gray-700"> <td class="p-3">${new Date(f.Timestamp).toLocaleString()}</td> <td class="p-3">${f['Shop Name'] || 'N/A'}</td> <td class="p-3">${f['Feedback Type']}</td> <td class="p-3 truncate max-w-xs" title="${f.Comment}">${f.Comment}</td> <td class="p-3"><span class="status-badge ${sc[f.Status] || 'bg-gray-500'}">${sm[f.Status] || f.Status}</span></td> <td class="p-3"> <select class="status-select bg-gray-600 rounded p-1" data-timestamp="${f.Timestamp}"> <option value="new" ${f.Status === 'new' ? 'selected' : ''}>新的</option> <option value="read" ${f.Status === 'read' ? 'selected' : ''}>已讀</option> <option value="resolved" ${f.Status === 'resolved' ? 'selected' : ''}>已解決</option> </select> <button class="update-status-btn ml-2 bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-2 rounded" data-timestamp="${f.Timestamp}">更新</button> </td> </tr> `).join(''); document.querySelectorAll('.update-status-btn').forEach(b => { b.addEventListener('click', async (e) => { const ts = e.target.dataset.timestamp, ns = document.querySelector(`select[data-timestamp="${ts}"]`).value; try { await apiCall('updateFeedbackStatus', { timestamp: ts, newStatus: ns }); alert('狀態更新成功'); loadFeedback(); } catch (err) {} }); }); }
 
         // =================================================================
-        // SHOP MODAL LOGIC
+        // SHOP MODAL LOGIC (IMAGE FEATURE REMOVED)
         // =================================================================
-        const shopModal = document.getElementById('shop-modal');
-        const shopFormFields = document.getElementById('shop-form-fields');
-        const shopModalTitle = document.getElementById('shop-modal-title');
-        const shopIdField = document.getElementById('shop-id');
-
-        const shopFieldDefinitions = [
-            { key: 'name_zh-TW', label: '中文名稱', type: 'text', required: true },
-            { key: 'name_en', label: '英文名稱', type: 'text', required: true },
-            { key: 'type_zh-TW', label: '中文類型', type: 'text' },
-            { key: 'type_en', label: '英文類型', type: 'text' },
-            { key: 'address_zh-TW', label: '中文地址', type: 'text' },
-            { key: 'address_en', label: '英文地址', type: 'text' },
-            { key: 'hours_zh-TW', label: '中文營業時間', type: 'text' },
-            { key: 'hours_en', label: '英文營業時間', type: 'text' },
-            { key: 'phone', label: '電話', type: 'text' },
-            { key: 'email', label: '電子郵件', type: 'email' },
-            { key: 'website', label: '網站', type: 'text' },
-            { key: 'lat', label: '緯度 (Lat)', type: 'number', required: true },
-            { key: 'lng', label: '經度 (Lng)', type: 'number', required: true },
-            { key: 'description_zh-TW', label: '中文簡短描述', type: 'textarea' },
-            { key: 'description_en', label: '英文簡短描述', type: 'textarea' },
-            { key: 'longDescription_zh-TW', label: '中文詳細描述', type: 'textarea' },
-            { key: 'longDescription_en', label: '英文詳細描述', type: 'textarea' },
-            { key: 'sustainability_zh-TW', label: '中文永續特色', type: 'textarea' },
-            { key: 'sustainability_en', label: '英文永續特色', type: 'textarea' },
-            { key: 'tags_zh-TW', label: '中文標籤 (逗號分隔)', type: 'text' },
-            { key: 'tags_en', label: '英文標籤 (逗號分隔)', type: 'text' },
-        ];
+        const shopModal = document.getElementById('shop-modal'), shopFormFields = document.getElementById('shop-form-fields'), shopModalTitle = document.getElementById('shop-modal-title'), shopIdField = document.getElementById('shop-id');
+        const shopFieldDefinitions = [ { key: 'name_zh-TW', label: '中文名稱', type: 'text', required: true }, { key: 'name_en', label: '英文名稱', type: 'text', required: true }, { key: 'type_zh-TW', label: '中文類型', type: 'text' }, { key: 'type_en', label: '英文類型', type: 'text' }, { key: 'address_zh-TW', label: '中文地址', type: 'text' }, { key: 'address_en', label: '英文地址', type: 'text' }, { key: 'hours_zh-TW', label: '中文營業時間', type: 'text' }, { key: 'hours_en', label: '英文營業時間', type: 'text' }, { key: 'phone', label: '電話', type: 'text' }, { key: 'email', label: '電子郵件', type: 'email' }, { key: 'website', label: '網站', type: 'text' }, { key: 'lat', label: '緯度 (Lat)', type: 'number', required: true }, { key: 'lng', label: '經度 (Lng)', type: 'number', required: true }, { key: 'description_zh-TW', label: '中文簡短描述', type: 'textarea' }, { key: 'description_en', label: '英文簡短描述', type: 'textarea' }, { key: 'longDescription_zh-TW', label: '中文詳細描述', type: 'textarea' }, { key: 'longDescription_en', label: '英文詳細描述', type: 'textarea' }, { key: 'sustainability_zh-TW', label: '中文永續特色', type: 'textarea' }, { key: 'sustainability_en', label: '英文永續特色', type: 'textarea' }, { key: 'tags_zh-TW', label: '中文標籤 (逗號分隔)', type: 'text' }, { key: 'tags_en', label: '英文標籤 (逗號分隔)', type: 'text' }, ];
         
-        shopFormFields.innerHTML = shopFieldDefinitions.map(field => {
-            const inputHtml = field.type === 'textarea'
-                ? `<textarea id="shop-${field.key.replace('_','-')}" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>`
-                : `<input type="${field.type}" step="any" id="shop-${field.key.replace('_','-')}" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500" ${field.required ? 'required' : ''}>`;
-            
-            return `
-                <div class="${field.type === 'textarea' ? 'md:col-span-2' : ''}">
-                    <label for="shop-${field.key.replace('_','-')}" class="block text-gray-400 mb-2">${field.label}${field.required ? ' *' : ''}</label>
-                    ${inputHtml}
-                </div>
-            `;
+        shopFormFields.innerHTML = shopFieldDefinitions.map(f => {
+            const inputId = `shop-${f.key.replace(/_/g, '-')}`;
+            const labelHtml = `<label for="${inputId}" class="block text-gray-400 mb-2">${f.label}${f.required ? ' *' : ''}</label>`;
+            let inputHtml = '';
+            if (f.type === 'textarea') {
+                inputHtml = `<textarea id="${inputId}" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>`;
+            } else {
+                inputHtml = `<input type="${f.type}" step="any" id="${inputId}" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500" ${f.required ? 'required' : ''}>`;
+            }
+            const colSpan = (f.type === 'textarea') ? 'md:col-span-2' : '';
+            return `<div class="${colSpan}">${labelHtml}${inputHtml}</div>`;
         }).join('');
 
-        document.getElementById('add-shop-btn').addEventListener('click', () => {
-            shopModalTitle.textContent = '新增店家';
-            shopIdField.value = '';
-            shopFieldDefinitions.forEach(field => {
-                document.getElementById(`shop-${field.key.replace('_','-')}`).value = '';
-            });
-            shopModal.classList.remove('hidden');
-});
-
-        async function editShop(id) {
-            shopModalTitle.textContent = '編輯店家';
-            shopIdField.value = id;
-            try {
-                const shop = await apiCall('getShopById', { id });
-                shopFieldDefinitions.forEach(field => {
-                    document.getElementById(`shop-${field.key.replace('_','-')}`).value = shop[field.key] || '';
-                });
-                shopModal.classList.remove('hidden');
-            } catch(error) {}
-        }
-
-        document.getElementById('cancel-shop-edit').addEventListener('click', () => {
-            shopModal.classList.add('hidden');
-        });
-
-        document.getElementById('save-shop-btn').addEventListener('click', async () => {
-            const shopData = { id: shopIdField.value };
-            let isValid = true;
-            shopFieldDefinitions.forEach(field => {
-                const input = document.getElementById(`shop-${field.key.replace('_','-')}`);
-                if (field.required && !input.value) {
-                    isValid = false;
-                }
-                shopData[field.key] = input.value;
-            });
-            
-            if(!isValid) {
-                alert('請填寫所有必填欄位 (*)');
-                return;
-            }
-            
-            try {
-                await apiCall('saveShop', { shop: shopData });
-                alert('店家資料儲存成功');
-                shopModal.classList.add('hidden');
-                loadShops();
-            } catch(error) {}
-        });
-
-        // Make functions globally accessible for inline HTML calls
-        window.savePolicy = savePolicy;
-        window.editShop = editShop;
-        window.deleteShop = deleteShop;
-        window.deleteSubscriber = deleteSubscriber;
+        document.getElementById('add-shop-btn').addEventListener('click', () => { shopModalTitle.textContent = '新增店家'; shopIdField.value = ''; shopFieldDefinitions.forEach(f => { document.getElementById(`shop-${f.key.replace(/_/g, '-')}`).value = ''; }); shopModal.classList.remove('hidden'); });
+        async function editShop(id) { shopModalTitle.textContent = '編輯店家'; shopIdField.value = id; try { const s = await apiCall('getShopById', { id }); shopFieldDefinitions.forEach(f => { document.getElementById(`shop-${f.key.replace(/_/g, '-')}`).value = s[f.key] || ''; }); shopModal.classList.remove('hidden'); } catch(e) {} }
+        document.getElementById('cancel-shop-edit').addEventListener('click', () => { shopModal.classList.add('hidden'); });
+        document.getElementById('save-shop-btn').addEventListener('click', async () => { const d = { id: shopIdField.value }; let v = true; shopFieldDefinitions.forEach(f => { const i = document.getElementById(`shop-${f.key.replace(/_/g, '-')}`); if (f.required && !i.value) v = false; d[f.key] = i.value; }); if(!v) { alert('請填寫所有必填欄位 (*)'); return; } try { await apiCall('saveShop', { shop: d }); alert('店家資料儲存成功'); shopModal.classList.add('hidden'); loadShops(); } catch(e) {} });
+        
+        window.savePolicy = savePolicy; window.editShop = editShop; window.deleteShop = deleteShop; window.deleteSubscriber = deleteSubscriber;
     </script>
 </body>
 </html>
