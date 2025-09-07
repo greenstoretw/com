@@ -3,324 +3,512 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>綠色商店後台管理</title>
+    <title>永續商店地圖 - 管理後台</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
-        .sidebar-item { transition: all 0.2s ease-in-out; }
-        .sidebar-item:hover, .sidebar-item.active { background-color: #10B981; color: white; transform: translateX(4px); }
-        .spinner { border-top-color: #3498db; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .modal-content { max-height: 85vh; }
+        ::-webkit-scrollbar-track { background: #2d3748; }
+        ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #718096; }
+        .tab-active {
+            border-bottom: 2px solid #4ade80; /* green-400 */
+            color: #4ade80;
+        }
     </style>
 </head>
-<body class="bg-gray-100 font-sans">
-    <div id="app">
-        <!-- Login Screen -->
-        <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gray-200">
-            <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-                <h2 class="text-2xl font-bold text-center text-gray-800">後台管理登入</h2>
-                <form id="loginForm">
-                    <div>
-                        <label for="password" class="text-sm font-medium text-gray-700">密碼</label>
-                        <input type="password" id="password" class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500" placeholder="請輸入密碼" required>
-                    </div>
-                    <button type="submit" id="loginButton" class="w-full px-4 py-2 font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2">登入</button>
-                </form>
-            </div>
-        </div>
+<body class="bg-gray-800 text-gray-200 font-sans">
 
-        <!-- Main Dashboard -->
-        <div id="dashboard" class="hidden">
-            <div class="flex h-screen bg-gray-100">
-                <!-- Sidebar -->
-                <div class="w-64 bg-gray-800 text-white flex flex-col">
-                    <div class="px-8 py-6 text-2xl font-bold">管理系統</div>
-                    <nav class="flex-1 px-4 py-4 space-y-2">
-                        <a href="#" data-section="mainDashboard" class="sidebar-item active flex items-center px-4 py-2 rounded-md"><i class="fas fa-tachometer-alt w-6"></i>儀表板</a>
-                        <a href="#" data-section="subscribers" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-users w-6"></i>訂閱者管理</a>
-                        <a href="#" data-section="announcements" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-bullhorn w-6"></i>公告管理</a>
-                        <a href="#" data-section="policies" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-file-alt w-6"></i>政策管理</a>
-                        <a href="#" data-section="shops" class="sidebar-item flex items-center px-4 py-2 rounded-md"><i class="fas fa-store w-6"></i>店家管理</a>
-                    </nav>
-                    <div class="px-4 py-4"><button id="logoutButton" class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"><i class="fas fa-sign-out-alt mr-2"></i>登出</button></div>
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gray-900">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-sm">
+            <h1 class="text-3xl font-bold text-center text-green-400 mb-6">管理後台登入</h1>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="password" class="block text-gray-400 mb-2">密碼</label>
+                    <input type="password" id="password" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500" required>
                 </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition duration-300">登入</button>
+            </form>
+            <p id="login-error" class="text-red-400 text-center mt-4"></p>
+        </div>
+    </div>
 
-                <!-- Main Content -->
-                <main class="flex-1 p-8 overflow-y-auto" id="mainContent"></main>
+    <!-- Main Dashboard -->
+    <div id="dashboard-screen" class="hidden">
+        <div class="flex h-screen bg-gray-900">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-gray-800 text-gray-300 flex flex-col">
+                <div class="p-4 text-2xl font-bold text-white border-b border-gray-700">
+                    <i class="fas fa-leaf text-green-400"></i> 管理選單
+                </div>
+                <nav class="flex-1 p-4 space-y-2">
+                    <a href="#" data-tab="dashboard" class="tab-link tab-active flex items-center p-3 rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-tachometer-alt fa-fw mr-3"></i> 儀表板
+                    </a>
+                    <a href="#" data-tab="subscribers" class="tab-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-users fa-fw mr-3"></i> 訂閱者管理
+                    </a>
+                    <a href="#" data-tab="shops" class="tab-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-store fa-fw mr-3"></i> 店家管理
+                    </a>
+                    <a href="#" data-tab="content" class="tab-link flex items-center p-3 rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-file-alt fa-fw mr-3"></i> 公告與政策
+                    </a>
+                </nav>
+                <div class="p-4 border-t border-gray-700">
+                    <button id="logout-button" class="w-full flex items-center justify-center p-3 bg-red-600 hover:bg-red-700 rounded-lg transition">
+                        <i class="fas fa-sign-out-alt fa-fw mr-2"></i> 登出
+                    </button>
+                </div>
+            </aside>
+            <!-- Main Content -->
+            <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+                <div id="tab-content">
+                    <!-- Dashboard Content -->
+                    <div id="dashboard-content" class="tab-pane">
+                        <h1 class="text-3xl font-bold mb-6 text-white">儀表板</h1>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                                <h2 class="text-lg font-semibold text-gray-400">總訂閱數</h2>
+                                <p id="subscriber-count" class="text-4xl font-bold text-green-400">0</p>
+                            </div>
+                            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                                <h2 class="text-lg font-semibold text-gray-400">總店家數</h2>
+                                <p id="shop-count" class="text-4xl font-bold text-green-400">0</p>
+                            </div>
+                             <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                                <h2 class="text-lg font-semibold text-gray-400">總回報數</h2>
+                                <p id="feedback-count" class="text-4xl font-bold text-green-400">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Subscribers Content -->
+                    <div id="subscribers-content" class="tab-pane hidden">
+                        <h1 class="text-3xl font-bold mb-6 text-white">訂閱者管理</h1>
+                        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                            <table class="w-full text-left">
+                                <thead class="border-b border-gray-700">
+                                    <tr>
+                                        <th class="p-3">電子郵件</th>
+                                        <th class="p-3">訂閱時間</th>
+                                        <th class="p-3">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subscribers-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Shops Content -->
+                    <div id="shops-content" class="tab-pane hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h1 class="text-3xl font-bold text-white">店家管理</h1>
+                            <button id="add-shop-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                                <i class="fas fa-plus mr-2"></i> 新增店家
+                            </button>
+                        </div>
+                         <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                            <table class="w-full text-left">
+                                <thead class="border-b border-gray-700">
+                                    <tr>
+                                        <th class="p-3">ID</th>
+                                        <th class="p-3">中文名稱</th>
+                                        <th class="p-3">類型</th>
+                                        <th class="p-3">地址</th>
+                                        <th class="p-3">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="shops-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Content (Announcements/Policies) Content -->
+                    <div id="content-content" class="tab-pane hidden">
+                        <h1 class="text-3xl font-bold mb-6 text-white">公告與政策管理</h1>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Announcements -->
+                            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                                <h2 class="text-xl font-bold mb-4">網站公告</h2>
+                                <textarea id="announcements-text" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                                <button id="save-announcements-btn" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">儲存公告</button>
+                            </div>
+                            <!-- Policies -->
+                            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                                <h2 class="text-xl font-bold mb-4">政策內容</h2>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="font-bold">隱私權政策</label>
+                                        <textarea id="policy-privacy" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                                        <button onclick="savePolicy('privacy')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">儲存隱私權政策</button>
+                                    </div>
+                                    <div>
+                                        <label class="font-bold">免責聲明</label>
+                                        <textarea id="policy-disclaimer" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                                        <button onclick="savePolicy('disclaimer')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">儲存免責聲明</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Shop Edit Modal -->
+    <div id="shop-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <h2 id="shop-modal-title" class="text-2xl font-bold mb-6 text-green-400">編輯店家</h2>
+            <form id="shop-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                <input type="hidden" id="shop-id">
+                <!-- Dynamically generated fields will be injected here -->
+            </form>
+            <div id="shop-form-fields" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"></div>
+             <div class="flex justify-end space-x-4 mt-8">
+                <button type="button" id="cancel-shop-edit" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg transition">取消</button>
+                <button type="button" id="save-shop-btn" class="px-6 py-2 bg-green-600 hover:bg-green-500 rounded-lg transition">儲存</button>
             </div>
         </div>
     </div>
     
-    <!-- Modals and Indicators -->
-    <div id="loadingIndicator" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-25"><div class="spinner h-16 w-16 border-4 border-gray-300 rounded-full"></div></div>
-    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden"></div>
-    <div id="errorModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden z-[1001] flex items-center justify-center p-4">
-        <div class="relative mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-            <h3 class="text-lg leading-6 font-medium text-red-700 text-center mb-4">發生錯誤</h3>
-            <div class="bg-red-50 p-4 rounded-md max-h-80 overflow-y-auto"><pre id="errorDetails" class="text-xs text-left text-gray-800 whitespace-pre-wrap break-all"></pre></div>
-            <div class="mt-4 text-center"><button id="closeErrorModal" class="px-6 py-2 bg-red-600 text-white text-base font-medium rounded-md">關閉</button></div>
-        </div>
-    </div>
-    <!-- Generic Form Modal -->
-    <div id="formModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden z-[1000] flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
-            <div class="p-6 border-b flex justify-between items-center">
-                <h3 id="modalTitle" class="text-xl font-semibold text-gray-800"></h3>
-                <button id="closeModalButtonX" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-            </div>
-            <div id="modalBody" class="p-6 overflow-y-auto modal-content"></div>
-            <div class="p-4 bg-gray-50 rounded-b-lg flex justify-end gap-4">
-                <button id="closeModalButton" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">取消</button>
-                <button id="saveModalButton" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">儲存</button>
-            </div>
-        </div>
-    </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyJ76tpxJ2eeRRqcv3qUqx3Z8nWLqrNsAIxgMR5vnkfmJOXulhhu1Av2T9w4AzDLg83gA/exec';
-
-    const ui = {
-        loginScreen: document.getElementById('loginScreen'),
-        dashboard: document.getElementById('dashboard'),
-        loginForm: document.getElementById('loginForm'),
-        logoutButton: document.getElementById('logoutButton'),
-        sidebarItems: document.querySelectorAll('.sidebar-item'),
-        mainContent: document.getElementById('mainContent'),
-        loadingIndicator: document.getElementById('loadingIndicator'),
-        toast: document.getElementById('toast'),
-        errorModal: document.getElementById('errorModal'),
-        errorDetails: document.getElementById('errorDetails'),
-        closeErrorModal: document.getElementById('closeErrorModal'),
-        formModal: document.getElementById('formModal'),
-        modalTitle: document.getElementById('modalTitle'),
-        modalBody: document.getElementById('modalBody'),
-        closeModalButton: document.getElementById('closeModalButton'),
-        closeModalButtonX: document.getElementById('closeModalButtonX'),
-        saveModalButton: document.getElementById('saveModalButton'),
-    };
-
-    const showToast = (message) => {
-        ui.toast.textContent = message;
-        ui.toast.classList.remove('hidden');
-        setTimeout(() => ui.toast.classList.add('hidden'), 3000);
-    };
-
-    const showErrorModal = (error) => {
-        let details = `錯誤類型: ${error.name || '未知錯誤'}\n`;
-        details += `錯誤訊息: ${error.message}\n\n`;
-        if (error.responseText) {
-            details += `後端原始回應 (可能是HTML錯誤頁):\n------------------------------------\n${error.responseText}\n------------------------------------\n\n`;
-        }
-        if (error.stack) { details += `堆疊追蹤:\n${error.stack}`; }
-        ui.errorDetails.textContent = details;
-        ui.errorModal.classList.remove('hidden');
-    };
-
-    async function apiFetch(action, params = {}) {
-        ui.loadingIndicator.classList.remove('hidden');
-        try {
-            const token = localStorage.getItem('authToken');
-            if (action !== 'login' && !token) {
-                logout();
-                throw new Error("Auth token not found. Please log in again.");
+    <script>
+        // =================================================================
+        // CONFIGURATION
+        // =================================================================
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyQz6D5P90b4d45p6QN_J5iUaIpjU0Xz6P5eF8B8D7k9R6J3s9S9a7Z8c7K6v5B4N3d/exec';
+        
+        // =================================================================
+        // DOM ELEMENTS
+        // =================================================================
+        const loginScreen = document.getElementById('login-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const loginForm = document.getElementById('login-form');
+        const logoutButton = document.getElementById('logout-button');
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        // =================================================================
+        // API CALLER
+        // =================================================================
+        const apiCall = async (action, payload = {}) => {
+            const token = localStorage.getItem('jwtToken');
+            if (!token && action !== 'login') {
+                showLoginScreen();
+                throw new Error('No token found');
             }
-            
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action, token, ...params }),
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                mode: 'cors'
-            });
 
-            const text = await response.text();
             try {
-                const result = JSON.parse(text);
-                 if (result.status === 'error') {
-                    if (result.message && result.message.toLowerCase().includes('token')) logout();
-                    throw new Error(result.message || 'Unknown backend error');
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    // [🔧 FIXED] Added redirect and headers for better compatibility
+                    redirect: "follow",
+                    body: JSON.stringify({ action, token, ...payload }),
+                    headers: { "Content-Type": "text/plain;charset=utf-8" }
+                });
+
+                const result = await response.json();
+                
+                if (result.status === 'error') {
+                    if (result.message.includes('token')) {
+                        showLoginScreen();
+                    }
+                    throw new Error(result.message);
                 }
                 return result.data;
-            } catch (e) {
-                const err = new Error("無法解碼字串。後端可能回傳了非預期的內容 (例如 HTML 錯誤頁面)。");
-                err.responseText = text;
-                err.stack = e.stack;
-                throw err;
+
+            } catch (error) {
+                console.error(`API call failed for action "${action}":`, error);
+                alert(`操作失敗: ${error.message}`);
+                throw error;
             }
-        } catch (error) {
-            showErrorModal(error);
-            throw error;
-        } finally {
-            ui.loadingIndicator.classList.add('hidden');
-        }
-    }
-
-    const login = async (password) => {
-        try {
-            const data = await apiFetch('login', { payload: { password } });
-            if (data && data.token) {
-                localStorage.setItem('authToken', data.token);
-                ui.loginScreen.classList.add('hidden');
-                ui.dashboard.classList.remove('hidden');
-                navigateTo('mainDashboard');
-            }
-        } catch (error) { document.getElementById('password').value = ''; }
-    };
-
-    const logout = () => {
-        localStorage.removeItem('authToken');
-        ui.dashboard.classList.add('hidden');
-        ui.loginScreen.classList.remove('hidden');
-        ui.mainContent.innerHTML = '';
-    };
-
-    const checkLogin = () => {
-        if (localStorage.getItem('authToken')) {
-            ui.loginScreen.classList.add('hidden');
-            ui.dashboard.classList.remove('hidden');
-            navigateTo('mainDashboard');
-        } else {
-             ui.dashboard.classList.add('hidden');
-             ui.loginScreen.classList.remove('hidden');
-        }
-    };
-
-    const openModal = (title, bodyHtml, saveHandler) => {
-        ui.modalTitle.textContent = title;
-        ui.modalBody.innerHTML = bodyHtml;
-        ui.formModal.classList.remove('hidden');
-        const newSaveButton = ui.saveModalButton.cloneNode(true);
-        ui.saveModalButton.parentNode.replaceChild(newSaveButton, ui.saveModalButton);
-        ui.saveModalButton = newSaveButton;
-        ui.saveModalButton.onclick = saveHandler;
-    };
-
-    const closeModal = () => ui.formModal.classList.add('hidden');
-    
-    const openShopForm = async (shopId = null) => {
-        const shop = shopId ? (await apiFetch('getShopById', { id: shopId })).shop : {};
-        const title = shopId ? '編輯店家' : '新增店家';
-        const formHtml = `
-            <form id="shopForm" class="space-y-4">
-                <input type="hidden" name="id" value="${shop.id || ''}">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="block">名稱 (繁中)</label><input type="text" name="name_zh-TW" class="w-full border p-2 rounded" value="${shop['name_zh-TW'] || ''}" required></div>
-                    <div><label class="block">名稱 (English)</label><input type="text" name="name_en" class="w-full border p-2 rounded" value="${shop['name_en'] || ''}"></div>
-                    <div><label class="block">類型 (繁中)</label><input type="text" name="type_zh-TW" class="w-full border p-2 rounded" value="${shop['type_zh-TW'] || ''}"></div>
-                    <div><label class="block">類型 (English)</label><input type="text" name="type_en" class="w-full border p-2 rounded" value="${shop['type_en'] || ''}"></div>
-                    <div><label class="block">地址 (繁中)</label><input type="text" name="address_zh-TW" class="w-full border p-2 rounded" value="${shop['address_zh-TW'] || ''}"></div>
-                    <div><label class="block">地址 (English)</label><input type="text" name="address_en" class="w-full border p-2 rounded" value="${shop['address_en'] || ''}"></div>
-                    <div><label class="block">電話</label><input type="text" name="phone" class="w-full border p-2 rounded" value="${shop.phone || ''}"></div>
-                    <div><label class="block">網站</label><input type="text" name="website" class="w-full border p-2 rounded" value="${shop.website || ''}"></div>
-                    <div><label class="block">緯度 (Lat)</label><input type="text" name="lat" class="w-full border p-2 rounded" value="${shop.lat || ''}"></div>
-                    <div><label class="block">經度 (Lng)</label><input type="text" name="lng" class="w-full border p-2 rounded" value="${shop.lng || ''}"></div>
-                </div>
-                <div><label class="block">簡短描述 (繁中)</label><textarea name="description_zh-TW" class="w-full border p-2 rounded h-24">${shop['description_zh-TW'] || ''}</textarea></div>
-                <div><label class="block">長描述 (繁中)</label><textarea name="longDescription_zh-TW" class="w-full border p-2 rounded h-24">${shop['longDescription_zh-TW'] || ''}</textarea></div>
-                <div><label class="block">簡短描述 (English)</label><textarea name="description_en" class="w-full border p-2 rounded h-24">${shop['description_en'] || ''}</textarea></div>
-                <div><label class="block">長描述 (English)</label><textarea name="longDescription_en" class="w-full border p-2 rounded h-24">${shop['longDescription_en'] || ''}</textarea></div>
-            </form>`;
-        openModal(title, formHtml, saveShop);
-    };
-
-    const saveShop = async () => {
-        const form = document.getElementById('shopForm');
-        const formData = new FormData(form);
-        const shopData = Object.fromEntries(formData.entries());
-        await apiFetch('saveShop', { shop: shopData });
-        closeModal();
-        showToast('店家已儲存！');
-        navigateTo('shops');
-    };
-    
-    const pageRenderers = {
-        mainDashboard: async () => {
-            const data = await apiFetch('getDashboardStats');
-            return `<h1 class="text-3xl font-bold mb-6">儀表板</h1><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-lg font-medium text-gray-600">總訂閱數</h2><p class="text-4xl font-bold text-emerald-600 mt-2">${data.totalSubscribers}</p></div><div class="p-6 bg-white rounded-lg shadow"><h2 class="text-lg font-medium text-gray-600">總店家數</h2><p class="text-4xl font-bold text-blue-600 mt-2">${data.totalShops}</p></div></div>`;
-        },
-        subscribers: async () => {
-            const data = await apiFetch('getSubscribers');
-            return `<h1 class="text-3xl font-bold mb-6">訂閱者管理</h1><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table class="min-w-full"><thead><tr><th class="py-2 px-4 text-left">Email</th><th class="py-2 px-4 text-left">訂閱時間</th><th class="py-2 px-4 text-left">操作</th></tr></thead><tbody>${data.subscribers.map(s => `<tr><td class="py-2 px-4 border-b">${s.email}</td><td class="py-2 px-4 border-b">${new Date(s.timestamp).toLocaleString()}</td><td class="py-2 px-4 border-b"><button class="text-red-500 hover:text-red-700" data-action="delete-subscriber" data-email="${s.email}">刪除</button></td></tr>`).join('')}</tbody></table></div>`;
-        },
-        announcements: async () => {
-            const data = await apiFetch('getAnnouncements');
-            return `<h1 class="text-3xl font-bold mb-6">公告管理</h1><div class="bg-white p-6 rounded-lg shadow"><label for="announcementsEditor" class="block text-lg font-medium mb-2">公告內容</label><textarea id="announcementsEditor" class="w-full h-48 p-3 border rounded">${data.announcements}</textarea><button id="saveAnnouncements" class="mt-4 px-4 py-2 text-white bg-emerald-600 rounded">儲存</button></div>`;
-        },
-        policies: async () => {
-            const data = await apiFetch('getPolicies');
-            return `<h1 class="text-3xl font-bold mb-6">政策管理</h1><div class="bg-white p-6 rounded-lg shadow space-y-6"><div><label for="privacy" class="block text-lg font-medium mb-2">隱私權政策</label><textarea id="privacy" class="w-full h-48 p-3 border rounded">${data.privacy || ''}</textarea><button data-key="privacy" class="save-policy mt-2 px-4 py-2 text-white bg-emerald-600">儲存</button></div><div><label for="disclaimer" class="block text-lg font-medium mb-2">免責聲明</label><textarea id="disclaimer" class="w-full h-48 p-3 border rounded">${data.disclaimer || ''}</textarea><button data-key="disclaimer" class="save-policy mt-2 px-4 py-2 text-white bg-emerald-600">儲存</button></div></div>`;
-        },
-        shops: async () => {
-            const data = await apiFetch('getShops');
-            return `<div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">店家管理</h1><button id="add-shop" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">新增店家</button></div><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table class="min-w-full"><thead><tr><th class="py-2 px-4 text-left">店家名稱</th><th class="py-2 px-4 text-left">類型</th><th class="py-2 px-4 text-left">操作</th></tr></thead><tbody>${data.shops.map(s => `<tr><td class="py-2 px-4 border-b">${s['name_zh-TW']}</td><td class="py-2 px-4 border-b">${s['type_zh-TW']}</td><td class="py-2 px-4 border-b space-x-2"><button class="text-blue-500" data-action="edit-shop" data-id="${s.id}">編輯</button><button class="text-red-500" data-action="delete-shop" data-id="${s.id}">刪除</button><button class="text-purple-500" data-action="recommend-shop" data-id="${s.id}">推薦</button></td></tr>`).join('')}</tbody></table></div>`;
-        }
-    };
-
-    const navigateTo = async (sectionId) => {
-        ui.sidebarItems.forEach(i => i.classList.remove('active'));
-        document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
-        try {
-            ui.mainContent.innerHTML = await pageRenderers[sectionId]();
-        } catch(e) {
-            ui.mainContent.innerHTML = `<div class="text-red-500 p-4 bg-red-100 rounded">無法載入。請檢查錯誤彈窗以獲取詳細資訊。</div>`;
-        }
-    };
-    
-    const setupEventListeners = () => {
-        ui.loginForm.addEventListener('submit', (e) => { e.preventDefault(); login(document.getElementById('password').value); });
-        ui.logoutButton.addEventListener('click', logout);
-        ui.closeErrorModal.addEventListener('click', () => ui.errorModal.classList.add('hidden'));
-        ui.closeModalButton.addEventListener('click', closeModal);
-        ui.closeModalButtonX.addEventListener('click', closeModal);
-
-        ui.sidebarItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); navigateTo(e.currentTarget.dataset.section); }));
+        };
         
-        ui.mainContent.addEventListener('click', async (e) => {
-            const target = e.target;
-            const action = target.dataset.action;
-            const id = target.dataset.id;
-            const email = target.dataset.email;
-
+        // =================================================================
+        // AUTHENTICATION
+        // =================================================================
+        
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            const loginError = document.getElementById('login-error');
+            loginError.textContent = '';
+            
             try {
-                if (target.id === 'add-shop') { openShopForm(); }
-                if (action === 'edit-shop') { openShopForm(id); }
-                if (action === 'delete-shop' && confirm(`確定要刪除此店家嗎？`)) {
-                    await apiFetch('deleteShop', { id });
-                    showToast('店家已刪除');
-                    navigateTo('shops');
-                }
-                if (action === 'delete-subscriber' && confirm(`確定要刪除此訂閱者嗎？`)) {
-                    await apiFetch('deleteSubscriber', { email });
-                    showToast('訂閱者已刪除');
-                    navigateTo('subscribers');
-                }
-                if (action === 'recommend-shop' && confirm(`確定要向所有訂閱者推薦此店家嗎？`)) {
-                    await apiFetch('sendRecommendation', { shopId: id });
-                    showToast('推薦信已開始發送');
-                }
-                if (target.id === 'saveAnnouncements') {
-                    const content = document.getElementById('announcementsEditor').value;
-                    await apiFetch('setAnnouncements', { payload: { content } });
-                    showToast('公告已儲存');
-                }
-                if (target.classList.contains('save-policy')) {
-                    const key = target.dataset.key;
-                    const value = document.getElementById(key).value;
-                    await apiFetch('setPolicy', { payload: { key, value } });
-                    showToast('政策已儲存');
-                }
-            } catch(error) { /* Handled by apiFetch */ }
+                const data = await apiCall('login', { password });
+                localStorage.setItem('jwtToken', data.token);
+                showDashboardScreen();
+            } catch (error) {
+                loginError.textContent = `登入失敗：${error.message}`;
+            }
         });
-    };
 
-    setupEventListeners();
-    checkLogin();
-});
-</script>
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('jwtToken');
+            showLoginScreen();
+        });
+
+        function showLoginScreen() {
+            loginScreen.classList.remove('hidden');
+            dashboardScreen.classList.add('hidden');
+        }
+
+        function showDashboardScreen() {
+            loginScreen.classList.add('hidden');
+            dashboardScreen.classList.remove('hidden');
+            loadDashboardStats();
+            switchTab('dashboard'); // Default to dashboard tab
+        }
+        
+        // Check for token on page load
+        if (localStorage.getItem('jwtToken')) {
+            showDashboardScreen();
+        }
+
+        // =================================================================
+        // TAB NAVIGATION
+        // =================================================================
+
+        tabLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tabName = link.dataset.tab;
+                switchTab(tabName);
+            });
+        });
+
+        function switchTab(tabName) {
+            tabLinks.forEach(link => {
+                link.classList.toggle('tab-active', link.dataset.tab === tabName);
+            });
+            tabPanes.forEach(pane => {
+                pane.classList.toggle('hidden', pane.id !== `${tabName}-content`);
+            });
+
+            // Load content for the selected tab
+            switch (tabName) {
+                case 'dashboard':
+                    loadDashboardStats();
+                    break;
+                case 'subscribers':
+                    loadSubscribers();
+                    break;
+                case 'shops':
+                    loadShops();
+                    break;
+                case 'content':
+                    loadContent();
+                    break;
+            }
+        }
+        
+        // =================================================================
+        // DATA LOADING & RENDERING
+        // =================================================================
+
+        async function loadDashboardStats() {
+            try {
+                const stats = await apiCall('getDashboardStats');
+                document.getElementById('subscriber-count').textContent = stats.subscriberCount;
+                document.getElementById('shop-count').textContent = stats.shopCount;
+                document.getElementById('feedback-count').textContent = stats.feedbackCount;
+            } catch (error) {
+                // Error already handled by apiCall
+            }
+        }
+
+        async function loadSubscribers() {
+            const tableBody = document.getElementById('subscribers-table');
+            tableBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center">載入中...</td></tr>';
+            try {
+                const subscribers = await apiCall('getSubscribers');
+                tableBody.innerHTML = subscribers.map(sub => `
+                    <tr class="border-b border-gray-700 hover:bg-gray-700">
+                        <td class="p-3">${sub.email}</td>
+                        <td class="p-3">${new Date(sub.timestamp).toLocaleString()}</td>
+                        <td class="p-3">
+                            <button onclick="deleteSubscriber('${sub.email}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-red-400">無法載入訂閱者資料</td></tr>';
+            }
+        }
+
+        async function deleteSubscriber(email) {
+            if (confirm(`確定要刪除訂閱者 ${email} 嗎？`)) {
+                try {
+                    await apiCall('deleteSubscriber', { email });
+                    alert('刪除成功');
+                    loadSubscribers();
+                } catch (error) {
+                    // Error handled by apiCall
+                }
+            }
+        }
+        
+        async function loadShops() {
+             const tableBody = document.getElementById('shops-table');
+             tableBody.innerHTML = '<tr><td colspan="5" class="p-3 text-center">載入中...</td></tr>';
+             try {
+                const shops = await apiCall('getShops');
+                tableBody.innerHTML = shops.map(shop => `
+                    <tr class="border-b border-gray-700 hover:bg-gray-700">
+                        <td class="p-3 font-mono text-sm">${shop.id}</td>
+                        <td class="p-3 font-bold">${shop.name_zh_TW}</td>
+                        <td class="p-3">${shop.type_zh_TW}</td>
+                        <td class="p-3">${shop.address_zh_TW}</td>
+                        <td class="p-3 space-x-2">
+                            <button onclick="editShop('${shop.id}')" class="text-blue-400 hover:text-blue-300"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteShop('${shop.id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-red-400">無法載入店家資料</td></tr>';
+            }
+        }
+
+        async function deleteShop(id) {
+            if (confirm(`確定要刪除店家 ID: ${id} 嗎？`)) {
+                try {
+                    await apiCall('deleteShop', { id });
+                    alert('刪除成功');
+                    loadShops();
+                } catch(error) { /* Handled by apiCall */ }
+            }
+        }
+        
+        async function loadContent() {
+            try {
+                const [announcements, policies] = await Promise.all([
+                    apiCall('getAnnouncements'),
+                    apiCall('getPolicies')
+                ]);
+                document.getElementById('announcements-text').value = announcements;
+                
+                policies.forEach(policy => {
+                   const key = policy.key.trim();
+                   if (document.getElementById(`policy-${key}`)){
+                       document.getElementById(`policy-${key}`).value = policy.value;
+                   }
+                });
+            } catch (error) {
+                // Error handled
+            }
+        }
+
+        document.getElementById('save-announcements-btn').addEventListener('click', async () => {
+            const announcements = document.getElementById('announcements-text').value;
+            try {
+                await apiCall('setAnnouncements', { announcements });
+                alert('公告儲存成功');
+            } catch (error) { /* Handled */ }
+        });
+
+        async function savePolicy(policyKey) {
+            const content = document.getElementById(`policy-${policyKey}`).value;
+            try {
+                await apiCall('setPolicy', { key: policyKey, value: content });
+                alert(`${policyKey === 'privacy' ? '隱私權政策' : '免責聲明'} 儲存成功`);
+            } catch (error) { /* Handled */ }
+        }
+
+        // =================================================================
+        // SHOP MODAL LOGIC
+        // =================================================================
+        const shopModal = document.getElementById('shop-modal');
+        const shopFormFields = document.getElementById('shop-form-fields');
+        const shopModalTitle = document.getElementById('shop-modal-title');
+        const shopIdField = document.getElementById('shop-id');
+
+        const shopFieldDefinitions = [
+            { key: 'name_zh-TW', label: '中文名稱', type: 'text', required: true },
+            { key: 'name_en', label: '英文名稱', type: 'text', required: true },
+            { key: 'type_zh-TW', label: '中文類型', type: 'text' },
+            { key: 'type_en', label: '英文類型', type: 'text' },
+            { key: 'address_zh-TW', label: '中文地址', type: 'text' },
+            { key: 'address_en', label: '英文地址', type: 'text' },
+            { key: 'hours_zh-TW', label: '中文營業時間', type: 'text' },
+            { key: 'hours_en', label: '英文營業時間', type: 'text' },
+            { key: 'phone', label: '電話', type: 'text' },
+            { key: 'email', label: '電子郵件', type: 'email' },
+            { key: 'website', label: '網站', type: 'text' },
+            { key: 'lat', label: '緯度', type: 'number' },
+            { key: 'lng', label: '經度', type: 'number' },
+            { key: 'description_zh-TW', label: '中文簡短描述', type: 'textarea' },
+            { key: 'description_en', label: '英文簡短描述', type: 'textarea' },
+            { key: 'longDescription_zh-TW', label: '中文詳細描述', type: 'textarea' },
+            { key: 'longDescription_en', label: '英文詳細描述', type: 'textarea' },
+            { key: 'sustainability_zh-TW', label: '中文永續特色', type: 'textarea' },
+            { key: 'sustainability_en', label: '英文永續特色', type: 'textarea' },
+            { key: 'tags_zh-TW', label: '中文標籤 (逗號分隔)', type: 'text' },
+            { key: 'tags_en', label: '英文標籤 (逗號分隔)', type: 'text' },
+        ];
+        
+        // Build the form fields once
+        shopFormFields.innerHTML = shopFieldDefinitions.map(field => {
+            const inputHtml = field.type === 'textarea'
+                ? `<textarea id="shop-${field.key}" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>`
+                : `<input type="${field.type}" step="any" id="shop-${field.key}" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500" ${field.required ? 'required' : ''}>`;
+            
+            return `
+                <div class="${field.type === 'textarea' ? 'md:col-span-2' : ''}">
+                    <label for="shop-${field.key}" class="block text-gray-400 mb-2">${field.label}${field.required ? ' *' : ''}</label>
+                    ${inputHtml}
+                </div>
+            `;
+        }).join('');
+
+        document.getElementById('add-shop-btn').addEventListener('click', () => {
+            shopModalTitle.textContent = '新增店家';
+            shopIdField.value = '';
+            shopFieldDefinitions.forEach(field => {
+                document.getElementById(`shop-${field.key}`).value = '';
+            });
+            shopModal.classList.remove('hidden');
+        });
+
+        async function editShop(id) {
+            shopModalTitle.textContent = '編輯店家';
+            shopIdField.value = id;
+            try {
+                const shop = await apiCall('getShopById', { id });
+                shopFieldDefinitions.forEach(field => {
+                    document.getElementById(`shop-${field.key}`).value = shop[field.key] || '';
+                });
+                shopModal.classList.remove('hidden');
+            } catch(error) { /* Handled */ }
+        }
+
+        document.getElementById('cancel-shop-edit').addEventListener('click', () => {
+            shopModal.classList.add('hidden');
+        });
+
+        document.getElementById('save-shop-btn').addEventListener('click', async () => {
+            const shopData = { id: shopIdField.value };
+            let isValid = true;
+            shopFieldDefinitions.forEach(field => {
+                const input = document.getElementById(`shop-${field.key}`);
+                if (field.required && !input.value) {
+                    isValid = false;
+                }
+                shopData[field.key] = input.value;
+            });
+            
+            if(!isValid) {
+                alert('請填寫所有必填欄位 (*)');
+                return;
+            }
+            
+            try {
+                await apiCall('saveShop', { shop: shopData });
+                alert('店家資料儲存成功');
+                shopModal.classList.add('hidden');
+                loadShops();
+            } catch(error) { /* Handled */ }
+        });
+    </script>
 </body>
 </html>
