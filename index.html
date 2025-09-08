@@ -294,8 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         feedback: async () => {
             const data = await apiFetch('getFeedback');
             const statusColors = { new: 'bg-blue-100 text-blue-800', in_progress: 'bg-yellow-100 text-yellow-800', resolved: 'bg-green-100 text-green-800' };
-            const statusTexts = { new: '新的回報', in_progress: '處理中', resolved: '已解決' };
-            return `<h1 class="text-3xl font-bold mb-6">問題回報管理</h1><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table class="min-w-full"><thead><tr><th class="py-2 px-4 text-left">時間</th><th class="py-2 px-4 text-left">類型</th><th class="py-2 px-4 text-left">內容</th><th class="py-2 px-4 text-left">狀態</th></tr></thead><tbody>${data.map(f => `<tr><td class="py-2 px-4 border-b whitespace-nowrap">${new Date(f.Timestamp).toLocaleString()}</td><td class="py-2 px-4 border-b">${f.FeedbackType}</td><td class="py-2 px-4 border-b max-w-sm truncate"><span title="${f.Comment}">${f.Comment}</span></td><td class="py-2 px-4 border-b"><select class="status-selector p-1 rounded-md border ${statusColors[f.Status] || 'bg-gray-100'}" data-timestamp="${f.Timestamp}"><option value="new" ${f.Status === 'new' ? 'selected' : ''}>新的回報</option><option value="in_progress" ${f.Status === 'in_progress' ? 'selected' : ''}>處理中</option><option value="resolved" ${f.Status === 'resolved' : ''}>已解決</option></select></td></tr>`).join('')}</tbody></table></div>`;
+            return `<h1 class="text-3xl font-bold mb-6">問題回報管理</h1><div class="bg-white p-6 rounded-lg shadow overflow-x-auto"><table class="min-w-full"><thead><tr><th class="py-2 px-4 text-left">時間</th><th class="py-2 px-4 text-left">類型</th><th class="py-2 px-4 text-left">內容</th><th class="py-2 px-4 text-left">狀態</th></tr></thead><tbody>${data.map(f => `<tr><td class="py-2 px-4 border-b whitespace-nowrap">${new Date(f.Timestamp).toLocaleString()}</td><td class="py-2 px-4 border-b">${f.FeedbackType}</td><td class="py-2 px-4 border-b max-w-sm truncate"><span title="${f.Comment}">${f.Comment}</span></td><td class="py-2 px-4 border-b"><select class="status-selector p-1 rounded-md border ${statusColors[f.Status] || 'bg-gray-100'}" data-timestamp="${f.Timestamp}"><option value="new" ${f.Status === 'new' ? 'selected' : ''}>新的回報</option><option value="in_progress" ${f.Status === 'in_progress' ? 'selected' : ''}>處理中</option><option value="resolved" ${f.Status === 'resolved' ? 'selected' : ''}>已解決</option></select></td></tr>`).join('')}</tbody></table></div>`;
         }
     };
 
@@ -386,3 +385,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
